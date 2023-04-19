@@ -7,7 +7,10 @@ from utils.response import Response
 def scraper(url, resp: Response):
     # testing
     with open('urmom.txt', "a") as f:
-        f.write(resp.raw_response)
+        print("hello")
+        # print(resp.raw_response.links)
+        # print(type(resp.raw_response))
+        # f.write(resp.raw_response.text)
         print(f"status: {resp.status}")
 
     links = extract_next_links(url, resp)
