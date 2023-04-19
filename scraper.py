@@ -1,7 +1,15 @@
 import re
 from urllib.parse import urlparse
 
-def scraper(url, resp):
+from utils.response import Response
+
+
+def scraper(url, resp: Response):
+    # testing
+    with open('urmom.txt', "a") as f:
+        f.write(resp.raw_response)
+        print(f"status: {resp.status}")
+
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
