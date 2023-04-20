@@ -1,23 +1,10 @@
 import re
 from urllib.parse import urlparse
-
 from utils.response import Response
+from bs4 import BeautifulSoup
 
 
 def scraper(url, resp: Response):
-    # testing
-    with open('urmom.txt', "a") as f:
-        print("hello")
-        # print(resp.raw_response.links)
-        # print(type(resp.raw_response))
-        # f.write(resp.raw_response.text)
-        print(f"status: {resp.status}")
-
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
-
-def extract_next_links(url, resp):
-    # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
@@ -25,6 +12,26 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
+
+    # TODO : check the status code
+
+    # TODO : parse webpage content & extract data
+    soup = BeautifulSoup(resp.raw_response.content, "lxml")
+
+    for tag_content in soup.stripped_strings:
+        # printing out body
+        print(tag_content)
+
+    # TODO : scrape out links from webpage hrefs
+    for link in soup.find_all('a'):
+        # printing out hyperlinks
+        print(f"URL : {link.get('href')}")
+
+
+    links = extract_next_links(url, resp)
+    return [link for link in links if is_valid(link)]
+
+def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     return list()
 
