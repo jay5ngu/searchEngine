@@ -1,8 +1,9 @@
 import re
+from collections import defaultdict
 from urllib.parse import urlparse
 from utils.response import Response
 from bs4 import BeautifulSoup
-
+import re
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -18,9 +19,21 @@ def scraper(url, resp: Response):
     # TODO : parse webpage content & extract data
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
+    # TODO : make these global?
+    num_words = 0
+    stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'} # TODO : fill this out
+    word_freqs = defaultdict(int)
+
     for tag_content in soup.stripped_strings:
-        # printing out body
-        print(tag_content)
+        # printing out content
+        tokens = re.findall('[A-Za-z0-9]+', tag_content) # TODO : update regex to include special cases
+        num_words += len(tokens)
+        lower_tokens = map(str.lower, tokens)
+        for token in lower_tokens:
+            if token not in stop_words:
+                word_freqs[token] += 1
+    print(num_words)
+    print(word_freqs)
 
     # TODO : scrape out links from webpage hrefs
     for link in soup.find_all('a'):
