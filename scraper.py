@@ -5,6 +5,46 @@ from utils.response import Response
 from bs4 import BeautifulSoup
 import re
 
+number_of_unique_pages = 0
+visited_hostnames_set = set()
+longest_page_length = 0
+word_freqs = defaultdict(int)
+fifty_most_common_words = defaultdict(int)
+subdomains_dict = defaultdict(int)
+
+
+def write_statistics():
+    global word_freqs
+    word_tuples_list = sorted([(key, val) for key, val in word_freqs.keys()], key=lambda x: -x[1])
+    final_word_tuples_list = []
+
+    if len(word_tuples_list) < 50:
+        final_word_tuples_list = [key for key, val in word_tuples_list]
+    else:
+        final_word_tuples_list = [word_tuples_list[i][0] for i in range(50)]
+
+    with open('statistics.txt', "w") as f:
+        global number_of_unique_pages
+        f.write(str(number_of_unique_pages) + '\n')
+
+        global longest_page_length
+        f.write(str(longest_page_length) + '\n')
+
+        f.write(str(final_word_tuples_list) + '\n')
+
+        global subdomains_dict
+        f.write(str(subdomains_dict) + '\n')
+
+
+def soup_playground():
+    with open('urmom.txt', "r") as f:
+        print("hello")
+
+        soup = BeautifulSoup(f, "lxml")
+        for link in soup.find_all('a'):
+            print(f"URL : {link.get('href')}")
+
+
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -19,19 +59,36 @@ def scraper(url, resp: Response):
     # TODO : parse webpage content & extract data
     soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
+    # checks if hostname has already been visited and increases number of unique pages if it hasn't (first bullet of second section of wiki)
+    global visited_hostnames_set
+    if str(soup.get('href')) not in visited_hostnames_set:
+        global number_of_unique_pages
+        number_of_unique_pages = number_of_unique_pages + 1
+
+    visited_hostnames_set.add(soup.get('href'))
+
+
+
     # TODO : make these global?
     num_words = 0
     stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'} # TODO : fill this out
-    word_freqs = defaultdict(int)
+
+    # refers to word frequencies (3rd bullet of section 3 of wiki)
+    global word_freqs
 
     for tag_content in soup.stripped_strings:
         # printing out content
-        tokens = re.findall('[A-Za-z0-9]+', tag_content) # TODO : update regex to include special cases
+        tokens = re.findall('[A-Za-z0-9]+@[A-Za-z.]+|[A-Za-z-A-Za-z]+|[A-Za-z-A-Za-z]+$|[A-Za-z0-9:.-@]+', tag_content) # TODO : check if this regex funtion is ok
         num_words += len(tokens)
         lower_tokens = map(str.lower, tokens)
         for token in lower_tokens:
             if token not in stop_words:
                 word_freqs[token] += 1
+
+    # updates longest page variable (2nd bullet of section 2 of wiki)
+    global longest_page_length
+    longest_page_length = max(num_words, longest_page_length)
+
     print(num_words)
     print(word_freqs)
 
