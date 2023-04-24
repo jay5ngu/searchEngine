@@ -9,20 +9,30 @@ import re
 class ReportStatisticsLogger:
     def __init__(self):
         # set of non-ICS subdomain unique page URLs (de-fragmented)
-        self.general_visited_pages: Set[str] = set()
+        self._general_visited_pages: Set[str] = set()
         # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
-        self.ics_visited_pages: Dict[str, Set[str]] = {}
+        self._ics_visited_pages: Dict[str, Set[str]] = {}
         # max encountered num words of page
-        self.max_words: int = 0
+        self._max_words: int = 0
         # non-stop word frequency counts, e.g. {word : frequency}
-        self.word_frequencies: Dict[str, int] = defaultdict(int)
+        self._word_frequencies: Dict[str, int] = defaultdict(int)
+
+        # parse stop words into global set
+        self._init_stop_words()
+
+    def _init_stop_words(self) -> None:
+        # TODO : fix the stop words
+        try:
+            with open('stop_words.txt') as file:
+                self.STOP_WORDS = set(line.rstrip().lower() for line in file)
+        except Exception as error:
+            print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
+            raise error
+
 
     def update_max_word_count(self, new_count: int) -> None:
-        if new_count > self.max_words:
-            self.max_words = new_count
-
-
-
+        if new_count > self._max_words:
+            self._max_words = new_count
 
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
@@ -96,3 +106,7 @@ def is_valid(url):
     except TypeError:
         print("TypeError for ", parsed)
         raise
+
+if __name__ == "__main__":
+    print(StatsLogger.STOP_WORDS)
+    print(len(StatsLogger.STOP_WORDS))
