@@ -33,6 +33,7 @@ class Worker(Thread):
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
 
+        # TODO : will this be called when just one worker is done or all of them?
         # calls function that writes out statistics from section 2 of repo wiki
         scraper.write_statistics()
 
