@@ -1,14 +1,38 @@
-import re
+from typing import Set, Dict
 from collections import defaultdict
 from urllib.parse import urlparse
 from utils.response import Response
 from bs4 import BeautifulSoup
 import re
 
+
+class ReportStatisticsLogger:
+    def __init__(self):
+        # set of non-ICS subdomain unique page URLs (de-fragmented)
+        self.general_visited_pages: Set[str] = set()
+        # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
+        self.ics_visited_pages: Dict[str, Set[str]] = {}
+        # max encountered num words of page
+        self.max_words: int = 0
+        # non-stop word frequency counts, e.g. {word : frequency}
+        self.word_frequencies: Dict[str, int] = defaultdict(int)
+
+    def update_max_word_count(self, new_count: int) -> None:
+        if new_count > self.max_words:
+            self.max_words = new_count
+
+
+
+
+
+StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
+
+
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there
+    # was some kind of problem.
     # resp.error: when status is not 200, you can check the error here, if needed.
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
@@ -17,21 +41,23 @@ def scraper(url, resp: Response):
     # TODO : check the status code
 
     # TODO : parse webpage content & extract data
-    soup = BeautifulSoup(resp.raw_response.content, "lxml")
+    soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
-    # TODO : make these global?
-    num_words = 0
-    stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'} # TODO : fill this out
+    num_words: int = 0  # temp var to track web page word count
+    stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'}  # TODO : fill this out
     word_freqs = defaultdict(int)
 
     for tag_content in soup.stripped_strings:
         # printing out content
-        tokens = re.findall('[A-Za-z0-9]+', tag_content) # TODO : update regex to include special cases
+        tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
         lower_tokens = map(str.lower, tokens)
         for token in lower_tokens:
             if token not in stop_words:
                 word_freqs[token] += 1
+    StatsLogger.update_max_word_count(num_words)
+
+    # debugging
     print(num_words)
     print(word_freqs)
 
@@ -40,13 +66,14 @@ def scraper(url, resp: Response):
         # printing out hyperlinks
         print(f"URL : {link.get('href')}")
 
-
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
+
 
 def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     return list()
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -67,5 +94,5 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
-        print ("TypeError for ", parsed)
+        print("TypeError for ", parsed)
         raise
