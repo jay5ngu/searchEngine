@@ -1,4 +1,4 @@
-from typing import Set, Dict
+from typing import Set, Dict, List
 from collections import defaultdict
 from urllib.parse import urlparse
 from utils.response import Response
@@ -29,10 +29,14 @@ class ReportStatisticsLogger:
             print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
             raise error
 
-
     def update_max_word_count(self, new_count: int) -> None:
         if new_count > self._max_words:
             self._max_words = new_count
+
+    def update_word_freqs(self, raw_tokens: List[str]) -> None:
+        for token in map(str.lower, raw_tokens):
+            if token not in self.STOP_WORDS:
+                self._word_frequencies[token] += 1
 
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
@@ -54,22 +58,13 @@ def scraper(url, resp: Response):
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
     num_words: int = 0  # temp var to track web page word count
-    stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'}  # TODO : fill this out
     word_freqs = defaultdict(int)
 
     for tag_content in soup.stripped_strings:
-        # printing out content
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
-        lower_tokens = map(str.lower, tokens)
-        for token in lower_tokens:
-            if token not in stop_words:
-                word_freqs[token] += 1
+        StatsLogger.update_word_freqs(tokens)
     StatsLogger.update_max_word_count(num_words)
-
-    # debugging
-    print(num_words)
-    print(word_freqs)
 
     # TODO : scrape out links from webpage hrefs
     for link in soup.find_all('a'):
@@ -106,6 +101,7 @@ def is_valid(url):
     except TypeError:
         print("TypeError for ", parsed)
         raise
+
 
 if __name__ == "__main__":
     print(StatsLogger.STOP_WORDS)
