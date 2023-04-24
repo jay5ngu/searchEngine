@@ -33,10 +33,12 @@ class ReportStatisticsLogger:
         if new_count > self._max_words:
             self._max_words = new_count
 
-    def update_word_freqs(self, raw_tokens: List[str]) -> None:
-        for token in map(str.lower, raw_tokens):
-            if token not in self.STOP_WORDS:
-                self._word_frequencies[token] += 1
+    def update_word_freqs(self, raw_tokens: List[str]) -> int:
+        num_good_tokens = 0
+        for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
+            self._word_frequencies[good_token] += 1
+            num_good_tokens += 1
+        return num_good_tokens
 
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
@@ -58,12 +60,12 @@ def scraper(url, resp: Response):
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
     num_words: int = 0  # temp var to track web page word count
-    word_freqs = defaultdict(int)
+    textual_info_count: int = 0
 
     for tag_content in soup.stripped_strings:
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
-        StatsLogger.update_word_freqs(tokens)
+        textual_info_count += StatsLogger.update_word_freqs(tokens) # TODO : utilize textual relevance score
     StatsLogger.update_max_word_count(num_words)
 
     # TODO : scrape out links from webpage hrefs
