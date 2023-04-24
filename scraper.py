@@ -78,7 +78,7 @@ def scraper(url, resp: Response):
 
     for tag_content in soup.stripped_strings:
         # printing out content
-        tokens = re.findall('[A-Za-z0-9]+@[A-Za-z.]+|[A-Za-z-A-Za-z]+|[A-Za-z-A-Za-z]+$|[A-Za-z0-9][A-Za-z0-9:.-@]+', tag_content) # TODO : check if this regex funtion is ok
+        tokens = re.findall("[A-Za-z]+'s|[A-Za-z0-9]+@[A-Za-z.]+|[A-Za-z-A-Za-z]+|[A-Za-z-A-Za-z]+$|[A-Za-z0-9][A-Za-z0-9:.-@]+", tag_content) # TODO : check if this regex funtion is ok
         num_words += len(tokens)
         lower_tokens = map(str.lower, tokens)
         for token in lower_tokens:
