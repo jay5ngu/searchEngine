@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import Set, Dict, List
 from collections import defaultdict
 from urllib.parse import urlparse
@@ -55,6 +56,11 @@ def scraper(url, resp: Response):
     #         resp.raw_response.content: the content of the page!
 
     # TODO : check the status code
+    if "ics.uci.edu" in resp.url:
+        defragmented_url = urllib.parse.urldefrag(resp.url)
+    # TODO : update the url parsing to remove scheme
+
+    resp.status
 
     # TODO : parse webpage content & extract data
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
