@@ -1,10 +1,31 @@
 import urllib.parse
 from typing import Set, Dict, List
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from urllib.parse import urlparse
 from utils.response import Response
 from bs4 import BeautifulSoup
 import re
+
+
+
+def soup_playground():
+
+    uniqueLinks = []
+
+    with open('urmom.txt', "r") as f:
+        soup = BeautifulSoup(f, "lxml")
+        # print(soup.get_text())
+        for link in soup.find_all('a'):
+            print(f"URL : {link.get('href')}")
+
+            uniqueLinks.append(urlparse(link.get('href')).netloc) ## attempt at getting unique pages based on hostname
+
+        uniqueLinks = set(uniqueLinks)
+
+        print("\n")
+        for i in uniqueLinks:
+            print(i)
+        print(str(len(uniqueLinks)) + " unique pages")
 
 
 class ReportStatisticsLogger:
@@ -56,8 +77,12 @@ def scraper(url, resp: Response):
     #         resp.raw_response.content: the content of the page!
 
     # TODO : check the status code
+    print(type(resp.url))
     if "ics.uci.edu" in resp.url:
         defragmented_url = urllib.parse.urldefrag(resp.url)
+        extracted_url = defragmented_url[0]._replace(scheme='')
+        print(extracted_url)
+
     # TODO : update the url parsing to remove scheme
 
     resp.status
@@ -112,5 +137,10 @@ def is_valid(url):
 
 
 if __name__ == "__main__":
-    print(StatsLogger.STOP_WORDS)
-    print(len(StatsLogger.STOP_WORDS))
+    defragmented_url = urlparse('http://www.compciv.org/guides/python/how-tos/creating-proper-url-query-strings#frag')
+    extracted_url = defragmented_url._replace(scheme='', fragment='')
+    print(extracted_url)
+    o = urllib.parse.urlunparse(extracted_url)
+    print(o)
+    # print(StatsLogger.STOP_WORDS)
+    # print(len(StatsLogger.STOP_WORDS))
