@@ -146,7 +146,7 @@ class ReportStatisticsShelf:
 #         return is_unique
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
-USEFUL_WORD_THRESHOLD = 100
+USEFUL_WORD_THRESHOLD = 100 # TODO : adjust this threshold
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -164,14 +164,8 @@ def scraper(url, resp: Response):
         # TODO : handle this case
         print(resp.error)
 
-    # track unique page
-    response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
-    if not StatsLogger.record_unique_url(response_url_components):
-        # recorded a duplicate URL
-        print(f"URL : {resp.url} is a duplicate")
-        return
-
     if not resp or not resp.raw_response or not resp.raw_response.content:
+        # don't crawl dead pages - 200 status but no data
         # TODO : handle this case
         return []
 
@@ -180,6 +174,9 @@ def scraper(url, resp: Response):
     num_words: int = 0  # temp var to track web page word count
     textual_info_count: int = 0
 
+    # TODO : check web page size??
+
+    # TODO : IMPORTANT --- check before updating stats
     for tag_content in soup.stripped_strings:
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
@@ -190,7 +187,12 @@ def scraper(url, resp: Response):
         # TODO : handle this case
         return []
 
-    # TODO : save recorded stats when we're done parsing
+    # track unique pages with high textual information content
+    response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
+    if not StatsLogger.record_unique_url(response_url_components):
+        # recorded a duplicate URL
+        print(f"URL : {resp.url} is a duplicate")
+        return
 
     # extract links from web content & convert to absolute URLs
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
