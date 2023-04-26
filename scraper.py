@@ -6,11 +6,20 @@ from utils.response import Response
 from bs4 import BeautifulSoup
 import re, shelve
 
+class ReportShelfKeys():
+    GENERAL_VISITED_PAGES = "general_visited_pages"
+    ICS_VISITED_PAGES = "ics_visited_pages"
+    MAX_WORDS = "max_words"
+    WORD_FREQUENCIES = "word_frequencies"
 
 class ReportStatisticsShelf:
     def __init__(self):
+        # constants
+        self.ICS_DOMAIN = ".ics.uci.edu"
+        self.STATISTICS_SHELF_FILE = "report_stats.shelve"
+
         # initialize all the report stat data structures
-        self.save = shelve.open(STATISTICS_SHELF_FILE)
+        self.save = shelve.open(self.STATISTICS_SHELF_FILE)
         # unique page URLs (de-fragmented / de-schemed), e.g. {domain : {URLs}}
         self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
         # unique page URLs (de-fragmented / de-schemed), e.g. {ICS subdomain : {URLs}}
@@ -22,9 +31,6 @@ class ReportStatisticsShelf:
 
         # parse stop words into global set
         self._init_stop_words()
-
-        # ICS domain
-        self.ICS_DOMAIN = ".ics.uci.edu"
 
     def __del__(self):
         # close shelf object when done
@@ -131,18 +137,8 @@ class ReportStatisticsShelf:
 #                 self._general_visited_pages.add(stripped_url_str)
 #         return is_unique
 
-
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 USEFUL_WORD_THRESHOLD = 100
-STATISTICS_SHELF_FILE = "report_stats.shelve"
-
-
-class ReportShelfKeys():
-    GENERAL_VISITED_PAGES = "general_visited_pages"
-    ICS_VISITED_PAGES = "ics_visited_pages"
-    MAX_WORDS = "max_words"
-    WORD_FREQUENCIES = "word_frequencies"
-
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
