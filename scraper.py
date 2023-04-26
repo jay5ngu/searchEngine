@@ -44,14 +44,13 @@ class ReportStatisticsLogger:
             num_good_tokens += 1
         return num_good_tokens
 
-    def record_unique_url(self, url: str) -> bool:
-        response_url_components: urllib.parse.ParseResult = urlparse(url)
-        stripped_url_str: str = response_url_components._replace(scheme='', fragment='').geturl()
-        if self.ICS_DOMAIN in response_url_components.hostname:  # TODO : more efficient way to check?
+    def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
+        stripped_url_str: str = url_components._replace(scheme='', fragment='').geturl()
+        if self.ICS_DOMAIN in url_components.hostname:  # TODO : more efficient way to check?
             # URL is in the ics.uci.edu subdomain
-            is_unique = stripped_url_str not in self._ics_visited_pages[response_url_components.hostname]
+            is_unique = stripped_url_str not in self._ics_visited_pages[url_components.hostname]
             if is_unique:
-                self._ics_visited_pages[response_url_components.hostname].add(stripped_url_str)
+                self._ics_visited_pages[url_components.hostname].add(stripped_url_str)
         else:
             is_unique = stripped_url_str not in self._general_visited_pages
             if is_unique:
@@ -60,6 +59,7 @@ class ReportStatisticsLogger:
 
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
+
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -77,7 +77,8 @@ def scraper(url, resp: Response):
     resp.status
 
     # track unique page
-    if not StatsLogger.record_unique_url(resp.url):
+    response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
+    if not StatsLogger.record_unique_url(response_url_components):
         # recorded a duplicate URL
         print(f"URL : {resp.url} is a duplicate")
         return
@@ -95,19 +96,26 @@ def scraper(url, resp: Response):
 
     # TODO : save recorded stats when we're done parsing
 
-    # TODO : scrape out links from webpage hrefs
-    for link in soup.find_all('a'):
-        # printing out hyperlinks
-        print(f"URL : {link.get('href')}")
+    # extract links from web content & convert to absolute URLs
+    discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
+    for link in discovered_links:
+        print(f"URL : {link}")
 
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    # filter extracted links for valid ones
+    return [link for link in discovered_links if is_valid(link)] # TODO : optimize / check for traps?
 
 
-def extract_next_links(url, resp):
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResult) -> str:
+    url_components: urllib.parse.ParseResult = urlparse(relative_url)
 
+    # ensure absolute url elements exist
+    if not url_components.scheme:
+        url_components = url_components._replace(scheme=reference_url.scheme)
+    if not url_components.netloc:
+        url_components = url_components._replace(netloc=reference_url.netloc)
+
+    # regenerate URL
+    return url_components.geturl()
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
