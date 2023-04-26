@@ -113,6 +113,11 @@ def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResul
         url_components = url_components._replace(scheme=reference_url.scheme)
     if not url_components.netloc:
         url_components = url_components._replace(netloc=reference_url.netloc)
+    if not url_components.path:
+        url_components = url_components._replace(path='/')
+
+    # de-fragment
+    url_components = url_components._replace(fragment='')
 
     # regenerate URL
     return url_components.geturl()
