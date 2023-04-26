@@ -4,46 +4,79 @@ from urllib.parse import urlparse
 from utils.response import Response
 from bs4 import BeautifulSoup
 import re
-
-# global variables
-number_of_unique_pages = 0
-visited_hostnames_set = set()
-longest_page_length = 0
-word_freqs = defaultdict(int)
-fifty_most_common_words = defaultdict(int)
-subdomains_dict = defaultdict(int)
+from collections import defaultdict
 
 
-def write_statistics():
-    global word_freqs
-    word_tuples_list = sorted([(key, val) for key, val in word_freqs.items()], key=lambda x: -x[1])
-    final_word_tuples_list = []
+class ReportStatisticsLogger:
+    def __init__(self):
+        # set of non-ICS subdomain unique page URLs (de-fragmented)
+        self._general_visited_pages = set()
+        # ICS subdomain page URLs (de-fragmented), e.g. {subdomain : {URLs}}
+        self._ics_visited_pages = defaultdict(set)
+        # max encountered num words of page (longest page length)
+        self._max_words: int = 0
+        # non-stop word frequency counts, e.g. {word : frequency}
+        self._word_frequencies = defaultdict(int)
 
-    if len(word_tuples_list) < 50:
-        final_word_tuples_list = [key for key, val in word_tuples_list]
-    else:
-        final_word_tuples_list = [word_tuples_list[i][0] for i in range(50)]
+        # parse stop words into global set
+        self._init_stop_words()
 
-    with open('statistics.txt', "w") as f:
-        global number_of_unique_pages
-        f.write(str(number_of_unique_pages) + '\n')
+    def _init_stop_words(self) -> None:
+        # TODO : fix the stop words
+        try:
+            with open('stop.txt') as file:
+                self.STOP_WORDS = set(line.rstrip().lower() for line in file)
+        except Exception as error:
+            print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
+            raise error
 
-        global longest_page_length
-        f.write(str(longest_page_length) + '\n')
+    def update_max_word_count(self, new_count: int) -> None:
+        # print(new_count)
+        if new_count > self._max_words:
+            self._max_words = new_count
 
-        f.write(str(final_word_tuples_list) + '\n')
+    def update_word_freqs(self, raw_tokens: list[str]) -> int:
+        num_good_tokens = 0
+        for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
+            # print(good_token)
+            self._word_frequencies[good_token] += 1
+            num_good_tokens += 1
+        return num_good_tokens
+    
+    def add_url(self, url):
+        # checks if hostname has already been visited and increases number of unique pages if it hasn't (first bullet of second section of wiki)
+        self._general_visited_pages.add(url)
+        parsed = urlparse(url)
+        if parsed.hostname in ['www.ics.uci.edu','www.cs.uci.edu/', 'www.informatics.uci.edu','www.stat.uci.edu'] and "#" not in url:
+            self._ics_visited_pages[parsed.hostname].add(url)
 
-        global subdomains_dict
-        f.write(str(subdomains_dict) + '\n')
+    def get_stats(self):
+        print(f'Total Pages : {self._general_visited_pages}')
+        print(f'ICS Pages : {self._ics_visited_pages}')
+        print(f'Word Count : {self._max_words}')
+    # def write_statistics(self):
+    #     word_tuples_list = sorted([(key, val) for key, val in self._word_frequencies.items()], key=lambda x: -x[1])
+    #     final_word_tuples_list = []
+
+    #     if len(word_tuples_list) < 50:
+    #         final_word_tuples_list = [key for key, val in word_tuples_list]
+    #     else:
+    #         final_word_tuples_list = [word_tuples_list[i][0] for i in range(50)]
+
+    #     with open('statistics.txt', "w") as f:
+    #         global number_of_unique_pages
+    #         f.write(str(len(visited_unique_hostnames)) + '\n')
+
+    #         global longest_page_length
+    #         f.write(str(longest_page_length) + '\n')
+
+    #         f.write(str(final_word_tuples_list) + '\n')
+
+    #         global subdomains_dict
+    #         f.write(str(subdomains_dict) + '\n')
 
 
-def soup_playground():
-    with open('urmom.txt', "r") as f:
-        print("hello")
-
-        soup = BeautifulSoup(f, "lxml")
-        for link in soup.find_all('a'):
-            print(f"URL : {link.get('href')}")
+StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
 
 
 def scraper(url, resp: Response):
@@ -60,40 +93,33 @@ def scraper(url, resp: Response):
         # TODO : parse webpage content & extract data
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
-        # checks if hostname has already been visited and increases number of unique pages if it hasn't (first bullet of second section of wiki)
-        global visited_hostnames_set
-        if str(soup.get('href')) not in visited_hostnames_set:
-            global number_of_unique_pages
-            number_of_unique_pages = number_of_unique_pages + 1
-
-        visited_hostnames_set.add(soup.get('href'))
-
-        # TODO : make these global?
-        num_words = 0
-        stop_words = {'and', 'but', 'to', 'for', 'nor', 'so'} # TODO : fill this out
+        StatsLogger.add_url(resp.url)
 
         # refers to word frequencies (3rd bullet of section 3 of wiki)
-        global word_freqs
-
+        valid_words = 0
         for tag_content in soup.stripped_strings:
+            # TODO : make time ranges work and solve bugs
             # printing out content
-            tokens = re.findall("[A-Za-z]+'s|[A-Za-z0-9]+@[A-Za-z.]+|[A-Za-z-A-Za-z]+|[A-Za-z-A-Za-z]+$|[A-Za-z0-9][A-Za-z0-9:.-@]+", tag_content) # TODO : make time ranges work and solve bugs
-            num_words += len(tokens)
-            lower_tokens = map(str.lower, tokens)
-            for token in lower_tokens:
-                if token not in stop_words:
-                    word_freqs[token] += 1
+            raw_tokens = re.findall("[A-Za-z]+'s|[A-Za-z0-9]+@[A-Za-z.]+|[A-Za-z-A-Za-z]+|[A-Za-z-A-Za-z]+$|[A-Za-z0-9][A-Za-z0-9:.-@]+", tag_content)
+            
+            # TODO : utilize textual relevance score
+            valid_words += StatsLogger.update_word_freqs(raw_tokens)
+            # print(valid_words)
+            # if valid_words < len(raw_tokens):
+            #     pass
+        StatsLogger.update_max_word_count(valid_words)
 
-        # updates longest page variable (2nd bullet of section 2 of wiki)
-        global longest_page_length
-        longest_page_length = max(num_words, longest_page_length)
+        # # updates longest page variable (2nd bullet of section 2 of wiki)
+        # global longest_page_length
+        # longest_page_length = max(num_words, longest_page_length)
 
-        # print(num_words)
-        # print(word_freqs)
+        # # print(num_words)
+        # # print(word_freqs)
 
-        # links = extract_next_links(url, resp)
-        # return [link for link in links if is_valid(link)]
-        return extract_next_links(url, resp)
+        # StatsLogger.get_stats()
+        # print()
+        links = extract_next_links(url, resp)
+        return [link for link in links if is_valid(link)]
     else:
         print(f'Error Code {resp.status}: {resp.error}')
         return []
@@ -115,6 +141,8 @@ def extract_next_links(url, resp):
             else: 
                 possible_url = "https:" + possible_url
         links.add(possible_url)
+    for url in links:
+        print(url)
     return list()
 
 def is_valid(url):
