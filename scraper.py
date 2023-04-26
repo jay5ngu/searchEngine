@@ -59,7 +59,7 @@ class ReportStatisticsLogger:
 
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
-
+USEFUL_WORD_THRESHOLD = 100
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -73,8 +73,9 @@ def scraper(url, resp: Response):
 
     # TODO : enforce valid URL check - assuming is valid for now
 
-    # TODO : check status
-    resp.status
+    if resp.status != 200:
+        # TODO : handle this case
+        print(resp.error)
 
     # track unique page
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
@@ -82,6 +83,10 @@ def scraper(url, resp: Response):
         # recorded a duplicate URL
         print(f"URL : {resp.url} is a duplicate")
         return
+
+    if not resp or not resp.raw_response or not resp.raw_response.content:
+        # TODO : handle this case
+        return []
 
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
@@ -93,6 +98,10 @@ def scraper(url, resp: Response):
         num_words += len(tokens)
         textual_info_count += StatsLogger.update_word_freqs(tokens)  # TODO : utilize textual relevance score
     StatsLogger.update_max_word_count(num_words)
+
+    if textual_info_count < USEFUL_WORD_THRESHOLD:
+        # TODO : handle this case
+        return []
 
     # TODO : save recorded stats when we're done parsing
 
