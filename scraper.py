@@ -22,7 +22,7 @@ class ReportStatisticsLogger:
         self._init_stop_words()
 
         # ICS domain
-        self.ICS_DOMAIN = "ics.uci.edu"
+        self.ICS_DOMAIN = ".ics.uci.edu"
 
     def _init_stop_words(self) -> None:
         # TODO : fix the stop words
@@ -61,7 +61,6 @@ class ReportStatisticsLogger:
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
 
-
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -80,9 +79,9 @@ def scraper(url, resp: Response):
     # track unique page
     if not StatsLogger.record_unique_url(resp.url):
         # recorded a duplicate URL
+        print(f"URL : {resp.url} is a duplicate")
         return
 
-    # TODO : parse webpage content & extract data
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
     num_words: int = 0  # temp var to track web page word count
@@ -93,6 +92,8 @@ def scraper(url, resp: Response):
         num_words += len(tokens)
         textual_info_count += StatsLogger.update_word_freqs(tokens)  # TODO : utilize textual relevance score
     StatsLogger.update_max_word_count(num_words)
+
+    # TODO : save recorded stats when we're done parsing
 
     # TODO : scrape out links from webpage hrefs
     for link in soup.find_all('a'):
@@ -116,6 +117,9 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        if not parsed.hostname or not re.match(r".*\.(ics|cs|informatics|stat)\.uci\.edu$", parsed.hostname):
+            # check domain is valid
+            return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -132,5 +136,7 @@ def is_valid(url):
 
 
 if __name__ == "__main__":
-    print(StatsLogger.STOP_WORDS)
-    print(len(StatsLogger.STOP_WORDS))
+    # print(StatsLogger.STOP_WORDS)
+    # print(len(StatsLogger.STOP_WORDS))
+
+    print(is_valid("http://www.vision.ics.uci.edu"))
