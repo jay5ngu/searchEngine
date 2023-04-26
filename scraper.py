@@ -12,7 +12,7 @@ class ReportStatisticsLogger:
         # set of non-ICS subdomain unique page URLs (de-fragmented)
         self._general_visited_pages: Set[str] = set()
         # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
-        self._ics_visited_pages: Dict[str, Set[str]] = {}
+        self._ics_visited_pages: Dict[str, Set[str]] = defaultdict(set)
         # max encountered num words of page
         self._max_words: int = 0
         # non-stop word frequency counts, e.g. {word : frequency}
@@ -20,6 +20,9 @@ class ReportStatisticsLogger:
 
         # parse stop words into global set
         self._init_stop_words()
+
+        # ICS domain
+        self.ICS_DOMAIN = "ics.uci.edu"
 
     def _init_stop_words(self) -> None:
         # TODO : fix the stop words
@@ -41,6 +44,20 @@ class ReportStatisticsLogger:
             num_good_tokens += 1
         return num_good_tokens
 
+    def record_unique_url(self, url: str) -> bool:
+        response_url_components: urllib.parse.ParseResult = urlparse(url)
+        stripped_url_str: str = response_url_components._replace(scheme='', fragment='').geturl()
+        if self.ICS_DOMAIN in response_url_components.hostname:  # TODO : more efficient way to check?
+            # URL is in the ics.uci.edu subdomain
+            is_unique = stripped_url_str not in self._ics_visited_pages[response_url_components.hostname]
+            if is_unique:
+                self._ics_visited_pages[response_url_components.hostname].add(stripped_url_str)
+        else:
+            is_unique = stripped_url_str not in self._general_visited_pages
+            if is_unique:
+                self._general_visited_pages.add(stripped_url_str)
+        return is_unique
+
 
 StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
 
@@ -55,12 +72,15 @@ def scraper(url, resp: Response):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
 
-    # TODO : check the status code
-    if "ics.uci.edu" in resp.url:
-        defragmented_url = urllib.parse.urldefrag(resp.url)
-    # TODO : update the url parsing to remove scheme
+    # TODO : enforce valid URL check - assuming is valid for now
 
+    # TODO : check status
     resp.status
+
+    # track unique page
+    if not StatsLogger.record_unique_url(resp.url):
+        # recorded a duplicate URL
+        return
 
     # TODO : parse webpage content & extract data
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
@@ -71,7 +91,7 @@ def scraper(url, resp: Response):
     for tag_content in soup.stripped_strings:
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
-        textual_info_count += StatsLogger.update_word_freqs(tokens) # TODO : utilize textual relevance score
+        textual_info_count += StatsLogger.update_word_freqs(tokens)  # TODO : utilize textual relevance score
     StatsLogger.update_max_word_count(num_words)
 
     # TODO : scrape out links from webpage hrefs
