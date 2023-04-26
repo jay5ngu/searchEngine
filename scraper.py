@@ -17,6 +17,7 @@ class ReportStatisticsShelf:
         # constants
         self.ICS_DOMAIN = ".ics.uci.edu"
         self.STATISTICS_SHELF_FILE = "report_stats.shelve"
+        self.CRAWL_BUDGET = 1000  # stop crawling if we've seen 1000 pages in a web domain
 
         # initialize all the report stat data structures
         self.save = shelve.open(self.STATISTICS_SHELF_FILE)
@@ -79,6 +80,13 @@ class ReportStatisticsShelf:
                 self.save[ReportShelfKeys.GENERAL_VISITED_PAGES] = general_visited_pages_temp
                 self.save.sync()
         return is_unique
+
+    def url_is_under_domain_threshold(self, url_components: urllib.parse.ParseResult) -> bool:
+        normalized_hostname = self.normalize_url(url_components.hostname)
+        if self.ICS_DOMAIN in normalized_hostname:
+            return len(self.save[ReportShelfKeys.ICS_VISITED_PAGES][normalized_hostname]) < self.CRAWL_BUDGET
+        else:
+            return len(self.save[ReportShelfKeys.GENERAL_VISITED_PAGES][normalized_hostname]) < self.CRAWL_BUDGET
 
     @staticmethod
     def normalize_url(url: str):
@@ -221,6 +229,9 @@ def is_valid(url):
             return False
         if not parsed.hostname or not re.match(r".*\.(ics|cs|informatics|stat)\.uci\.edu$", parsed.hostname):
             # check domain is valid
+            return False
+        if not StatsLogger.url_is_under_domain_threshold(parsed):
+            # enforce crawling budget for each valid web domain
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
