@@ -1,28 +1,34 @@
 import urllib.parse
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Tuple
 from collections import defaultdict
 from urllib.parse import urlparse
 from utils.response import Response
 from bs4 import BeautifulSoup
-import re
+import re, shelve
 
 
-class ReportStatisticsLogger:
+class ReportStatisticsShelf:
     def __init__(self):
-        # set of non-ICS subdomain unique page URLs (de-fragmented)
-        self._general_visited_pages: Set[str] = set()
-        # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
-        self._ics_visited_pages: Dict[str, Set[str]] = defaultdict(set)
+        # initialize all the report stat data structures
+        self.save = shelve.open(STATISTICS_SHELF_FILE)
+        # unique page URLs (de-fragmented / de-schemed), e.g. {domain : {URLs}}
+        self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
+        # unique page URLs (de-fragmented / de-schemed), e.g. {ICS subdomain : {URLs}}
+        self.save[ReportShelfKeys.ICS_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
         # max encountered num words of page
-        self._max_words: int = 0
+        self.save[ReportShelfKeys.MAX_WORDS]: int = 0
         # non-stop word frequency counts, e.g. {word : frequency}
-        self._word_frequencies: Dict[str, int] = defaultdict(int)
+        self.save[ReportShelfKeys.WORD_FREQUENCIES]: Dict[str, int] = defaultdict(int)
 
         # parse stop words into global set
         self._init_stop_words()
 
         # ICS domain
         self.ICS_DOMAIN = ".ics.uci.edu"
+
+    def __del__(self):
+        # close shelf object when done
+        self.save.close()
 
     def _init_stop_words(self) -> None:
         # TODO : fix the stop words
@@ -34,32 +40,109 @@ class ReportStatisticsLogger:
             raise error
 
     def update_max_word_count(self, new_count: int) -> None:
-        if new_count > self._max_words:
-            self._max_words = new_count
+        if new_count > self.save[ReportShelfKeys.MAX_WORDS]:
+            self.save[ReportShelfKeys.MAX_WORDS] = new_count
+            self.save.sync()
 
     def update_word_freqs(self, raw_tokens: List[str]) -> int:
         num_good_tokens = 0
+        word_freq_temp: Dict[str, int] = self.save[ReportShelfKeys.WORD_FREQUENCIES]
         for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
-            self._word_frequencies[good_token] += 1
+            word_freq_temp[good_token] += 1
             num_good_tokens += 1
+        self.save[ReportShelfKeys.WORD_FREQUENCIES] = word_freq_temp
+        self.save.sync()
         return num_good_tokens
 
     def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
-        stripped_url_str: str = url_components._replace(scheme='', fragment='').geturl()
-        if self.ICS_DOMAIN in url_components.hostname:  # TODO : more efficient way to check?
+        stripped_url_str: str = self.normalize_url(url_components._replace(scheme='', fragment='').geturl())
+        normalized_hostname = self.normalize_url(url_components.hostname)
+        if self.ICS_DOMAIN in normalized_hostname:  # TODO : more efficient way to check?
             # URL is in the ics.uci.edu subdomain
-            is_unique = stripped_url_str not in self._ics_visited_pages[url_components.hostname]
+            ics_visited_pages_temp: Dict[str, Set[str]] = self.save[ReportShelfKeys.ICS_VISITED_PAGES]
+            is_unique = stripped_url_str not in ics_visited_pages_temp[normalized_hostname]
             if is_unique:
-                self._ics_visited_pages[url_components.hostname].add(stripped_url_str)
+                ics_visited_pages_temp[normalized_hostname].add(stripped_url_str)
+                self.save[ReportShelfKeys.ICS_VISITED_PAGES] = ics_visited_pages_temp
+                self.save.sync()
         else:
-            is_unique = stripped_url_str not in self._general_visited_pages
+            general_visited_pages_temp = Dict[str, Set[str]] = self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]
+            is_unique = stripped_url_str not in general_visited_pages_temp
             if is_unique:
-                self._general_visited_pages.add(stripped_url_str)
+                general_visited_pages_temp[normalized_hostname].add(stripped_url_str)
+                self.save[ReportShelfKeys.GENERAL_VISITED_PAGES] = general_visited_pages_temp
+                self.save.sync()
         return is_unique
 
+    @staticmethod
+    def normalize_url(url: str):
+        if url.endswith("/"):
+            return url.rstrip("/")
+        return url
 
-StatsLogger: ReportStatisticsLogger = ReportStatisticsLogger()
+
+# class ReportStatisticsLogger:
+#     def __init__(self):
+#         # set of non-ICS subdomain unique page URLs (de-fragmented)
+#         self._general_visited_pages: Set[str] = set()
+#         # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
+#         self._ics_visited_pages: Dict[str, Set[str]] = defaultdict(set)
+#         # max encountered num words of page
+#         self._max_words: int = 0
+#         # non-stop word frequency counts, e.g. {word : frequency}
+#         self._word_frequencies: Dict[str, int] = defaultdict(int)
+#
+#         # parse stop words into global set
+#         self._init_stop_words()
+#
+#         # ICS domain
+#         self.ICS_DOMAIN = ".ics.uci.edu"
+#
+#     def _init_stop_words(self) -> None:
+#         # TODO : fix the stop words
+#         try:
+#             with open('stop_words.txt') as file:
+#                 self.STOP_WORDS = set(line.rstrip().lower() for line in file)
+#         except Exception as error:
+#             print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
+#             raise error
+#
+#     def update_max_word_count(self, new_count: int) -> None:
+#         if new_count > self._max_words:
+#             self._max_words = new_count
+#
+#     def update_word_freqs(self, raw_tokens: List[str]) -> int:
+#         num_good_tokens = 0
+#         for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
+#             self._word_frequencies[good_token] += 1
+#             num_good_tokens += 1
+#         return num_good_tokens
+#
+#     def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
+#         stripped_url_str: str = url_components._replace(scheme='', fragment='').geturl()
+#         if self.ICS_DOMAIN in url_components.hostname:  # TODO : more efficient way to check?
+#             # URL is in the ics.uci.edu subdomain
+#             is_unique = stripped_url_str not in self._ics_visited_pages[url_components.hostname]
+#             if is_unique:
+#                 self._ics_visited_pages[url_components.hostname].add(stripped_url_str)
+#         else:
+#             is_unique = stripped_url_str not in self._general_visited_pages
+#             if is_unique:
+#                 self._general_visited_pages.add(stripped_url_str)
+#         return is_unique
+
+
+StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 USEFUL_WORD_THRESHOLD = 100
+STATISTICS_SHELF_FILE = "report_stats.shelve"
+
+
+class ReportShelfKeys():
+    GENERAL_VISITED_PAGES = "general_visited_pages"
+    ICS_VISITED_PAGES = "ics_visited_pages"
+    MAX_WORDS = "max_words"
+    WORD_FREQUENCIES = "word_frequencies"
+
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -111,7 +194,7 @@ def scraper(url, resp: Response):
         print(f"URL : {link}")
 
     # filter extracted links for valid ones
-    return [link for link in discovered_links if is_valid(link)] # TODO : optimize / check for traps?
+    return [link for link in discovered_links if is_valid(link)]  # TODO : optimize / check for traps?
 
 
 def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResult) -> str:
@@ -130,6 +213,7 @@ def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResul
 
     # regenerate URL
     return url_components.geturl()
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
