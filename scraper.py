@@ -215,8 +215,6 @@ def scraper(url, resp: Response):
 
     # extract links from web content & convert to absolute URLs
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
-    for link in discovered_links:
-        print(f"URL : {link}")
 
     # filter extracted links for valid ones
     return [link for link in discovered_links if is_valid(link)]  # TODO : optimize / check for traps?
