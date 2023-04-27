@@ -17,7 +17,11 @@ class ReportStatisticsShelf:
         # constants
         self.ICS_DOMAIN = ".ics.uci.edu"
         self.STATISTICS_SHELF_FILE = "report_stats.shelve"
-        self.CRAWL_BUDGET = 1000  # stop crawling if we've seen 1000 pages in a web domain
+        self.SHOULD_ENFORCE_CRAWL_BUDGET = False
+        self.CRAWL_BUDGET = 4000  # stop crawling a certain domain if we've seen too many pages
+
+        # data structure to temporarily track word frequencies
+        self.word_freq_temp: Dict[str, int] = defaultdict(int)
 
         # initialize all the report stat data structures
         self.save = shelve.open(self.STATISTICS_SHELF_FILE)
@@ -51,15 +55,22 @@ class ReportStatisticsShelf:
             self.save[ReportShelfKeys.MAX_WORDS] = new_count
             self.save.sync()
 
-    def update_word_freqs(self, raw_tokens: List[str]) -> int:
+    def count_word_freqs(self, raw_tokens: List[str]) -> int:
         num_good_tokens = 0
-        word_freq_temp: Dict[str, int] = self.save[ReportShelfKeys.WORD_FREQUENCIES]
+        self.word_freq_temp: Dict[str, int] = {}
         for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
-            word_freq_temp[good_token] += 1
+            self.word_freq_temp[good_token] += 1
             num_good_tokens += 1
-        self.save[ReportShelfKeys.WORD_FREQUENCIES] = word_freq_temp
-        self.save.sync()
         return num_good_tokens
+
+    def update_word_freqs(self):
+        saved_word_freq: Dict[str, int] = self.save[ReportShelfKeys.WORD_FREQUENCIES]
+        for key, value in self.word_freq_temp:
+            saved_word_freq[key] += value
+        self.save[ReportShelfKeys.WORD_FREQUENCIES] = saved_word_freq
+        self.save.sync()
+        self.word_freq_temp.clear()
+
 
     def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
         stripped_url_str: str = self.normalize_url(url_components._replace(scheme='', fragment='').geturl())
@@ -159,7 +170,9 @@ def scraper(url, resp: Response):
     #         resp.raw_response.content: the content of the page!
 
     # TODO : enforce valid URL check - assuming is valid for now
+    # TODO : check for website redirects
 
+    ''' STATUS CHECKS ---------------- '''
     if resp.status != 200:
         # TODO : handle this case
         print(resp.error)
@@ -169,30 +182,36 @@ def scraper(url, resp: Response):
         # TODO : handle this case
         return []
 
+    # TODO : check web page size??
+
+    ''' LOG REPORT STATS ---------------- '''
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
     num_words: int = 0  # temp var to track web page word count
     textual_info_count: int = 0
 
-    # TODO : check web page size??
-
-    # TODO : IMPORTANT --- check before updating stats
     for tag_content in soup.stripped_strings:
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
-        textual_info_count += StatsLogger.update_word_freqs(tokens)  # TODO : utilize textual relevance score
+        textual_info_count += StatsLogger.count_word_freqs(tokens) # TODO : revert back to old function?
+    # record non-stop word frequencies
+    StatsLogger.update_word_freqs()
+    # record max word counts
     StatsLogger.update_max_word_count(num_words)
 
-    if textual_info_count < USEFUL_WORD_THRESHOLD:
-        # TODO : handle this case
-        return []
-
-    # track unique pages with high textual information content
+    # track unique pages
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
     if not StatsLogger.record_unique_url(response_url_components):
         # recorded a duplicate URL
         print(f"URL : {resp.url} is a duplicate")
         return
+
+    ''' ENFORCE CRAWLER CHECKS ---------------- '''
+
+    # only crawl pages with high textual information content
+    if textual_info_count < USEFUL_WORD_THRESHOLD:
+        # TODO : handle this case
+        return []
 
     # extract links from web content & convert to absolute URLs
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
@@ -232,7 +251,7 @@ def is_valid(url):
         if not parsed.hostname or not re.match(r".*\.(ics|cs|informatics|stat)\.uci\.edu$", parsed.hostname):
             # check domain is valid
             return False
-        if not StatsLogger.url_is_under_domain_threshold(parsed):
+        if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
         return not re.match(
