@@ -175,7 +175,8 @@ def scraper(url, resp: Response):
     ''' STATUS CHECKS ---------------- '''
     if resp.status != 200:
         # TODO : handle this case
-        print(resp.error)
+        with open('status_errors.txt', 'a') as f:
+            f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
 
     if not resp or not resp.raw_response or not resp.raw_response.content:
         # don't crawl dead pages - 200 status but no data
