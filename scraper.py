@@ -101,9 +101,12 @@ class ReportStatisticsShelf:
 
     @staticmethod
     def normalize_url(url: str):
+        normalized_url = url
         if url.endswith("/"):
-            return url.rstrip("/")
-        return url
+            normalized_url = url.rstrip("/")
+        if url.startswith("www."):
+            normalized_url = url.lstrip("www.")
+        return normalized_url
 
 
 # class ReportStatisticsLogger:
