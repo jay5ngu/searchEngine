@@ -168,7 +168,7 @@ def scraper(url, resp: Response):
 
     # TODO : enforce valid URL check - assuming is valid for now
     # TODO : check for website redirects
-    if url != resp.url:  # EXPERIMENT - REMOVE LATER
+    if url != resp.url or resp.status >= 300 and resp.status < 400:  # EXPERIMENT - REMOVE LATER
         with open('redirects.txt', 'a') as f:
             f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
 
