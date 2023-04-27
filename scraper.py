@@ -12,6 +12,7 @@ class ReportShelfKeys():
     MAX_WORDS = "max_words"
     WORD_FREQUENCIES = "word_frequencies"
 
+
 class ReportStatisticsShelf:
     def __init__(self):
         # constants
@@ -30,7 +31,7 @@ class ReportStatisticsShelf:
         # unique page URLs (de-fragmented / de-schemed), e.g. {ICS subdomain : {URLs}}
         self.save[ReportShelfKeys.ICS_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
         # max encountered num words of page
-        self.save[ReportShelfKeys.MAX_WORDS]: int = 0
+        self.save[ReportShelfKeys.MAX_WORDS]: Tuple[int, str] = (0, '')
         # non-stop word frequency counts, e.g. {word : frequency}
         self.save[ReportShelfKeys.WORD_FREQUENCIES]: Dict[str, int] = defaultdict(int)
 
@@ -50,9 +51,9 @@ class ReportStatisticsShelf:
             print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
             raise error
 
-    def update_max_word_count(self, new_count: int) -> None:
+    def update_max_word_count(self, new_count: int, url: str) -> None:
         if new_count > self.save[ReportShelfKeys.MAX_WORDS]:
-            self.save[ReportShelfKeys.MAX_WORDS] = new_count
+            self.save[ReportShelfKeys.MAX_WORDS] = (new_count, url)
             self.save.sync()
 
     def count_word_freqs(self, raw_tokens: List[str]) -> int:
@@ -74,7 +75,7 @@ class ReportStatisticsShelf:
     def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
         stripped_url_str: str = self.normalize_url(url_components._replace(scheme='', fragment='').geturl())
         normalized_hostname = self.normalize_url(url_components.hostname)
-        if self.ICS_DOMAIN in normalized_hostname:  # TODO : more efficient way to check?
+        if self.ICS_DOMAIN in normalized_hostname:
             # URL is in the ics.uci.edu subdomain
             ics_visited_pages_temp: Dict[str, Set[str]] = self.save[ReportShelfKeys.ICS_VISITED_PAGES]
             is_unique = stripped_url_str not in ics_visited_pages_temp[normalized_hostname]
@@ -170,6 +171,9 @@ def scraper(url, resp: Response):
 
     # TODO : enforce valid URL check - assuming is valid for now
     # TODO : check for website redirects
+    if url != resp.url: # EXPERIMENT - REMOVE LATER
+        with open('redirects.txt', 'a') as f:
+            f.append(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}')
 
     ''' STATUS CHECKS ---------------- '''
     if resp.status != 200:
@@ -178,11 +182,14 @@ def scraper(url, resp: Response):
 
     if not resp or not resp.raw_response or not resp.raw_response.content:
         # don't crawl dead pages - 200 status but no data
-        # TODO : handle this case
         return []
 
-    # TODO : check web page size??
+    # TODO : check web page size?? # EXPERIMENT - REMOVE LATER
+    if len(resp.raw_response.content) > 500000:
+        with open('sizes.txt', 'a') as f:
+            f.append(f'Website: {resp.url} , Size: {len(resp.raw_response.content)}')
 
+    # TODO : do we log stats for bad pages that we don't crawl too
     ''' LOG REPORT STATS ---------------- '''
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
@@ -196,7 +203,7 @@ def scraper(url, resp: Response):
     # record non-stop word frequencies
     StatsLogger.update_word_freqs()
     # record max word counts
-    StatsLogger.update_max_word_count(num_words)
+    StatsLogger.update_max_word_count(num_words, resp.url)
 
     # track unique pages
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
