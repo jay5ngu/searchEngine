@@ -6,6 +6,7 @@ from utils.response import Response
 from bs4 import BeautifulSoup
 import re, shelve
 
+
 class ReportShelfKeys():
     GENERAL_VISITED_PAGES = "general_visited_pages"
     ICS_VISITED_PAGES = "ics_visited_pages"
@@ -27,9 +28,9 @@ class ReportStatisticsShelf:
         # initialize all the report stat data structures
         self.save = shelve.open(self.STATISTICS_SHELF_FILE)
         # unique page URLs (de-fragmented / de-schemed), e.g. {domain : {URLs}}
-        self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
+        self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]: Dict[str, int] = defaultdict(int)
         # unique page URLs (de-fragmented / de-schemed), e.g. {ICS subdomain : {URLs}}
-        self.save[ReportShelfKeys.ICS_VISITED_PAGES]: Dict[str, Set[str]] = defaultdict(set)
+        self.save[ReportShelfKeys.ICS_VISITED_PAGES]: Dict[str, int] = defaultdict(int)
         # max encountered num words of page
         self.save[ReportShelfKeys.MAX_WORDS]: Tuple[int, str] = (0, '')
         # non-stop word frequency counts, e.g. {word : frequency}
@@ -71,33 +72,25 @@ class ReportStatisticsShelf:
         self.save.sync()
         self.word_freq_temp.clear()
 
-
-    def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
-        stripped_url_str: str = self.normalize_url(url_components._replace(scheme='', fragment='').geturl())
+    def record_unique_url(self, url_components: urllib.parse.ParseResult) -> None:
         normalized_hostname = self.normalize_url(url_components.hostname)
         if self.ICS_DOMAIN in normalized_hostname:
             # URL is in the ics.uci.edu subdomain
-            ics_visited_pages_temp: Dict[str, Set[str]] = self.save[ReportShelfKeys.ICS_VISITED_PAGES]
-            is_unique = stripped_url_str not in ics_visited_pages_temp[normalized_hostname]
-            if is_unique:
-                ics_visited_pages_temp[normalized_hostname].add(stripped_url_str)
-                self.save[ReportShelfKeys.ICS_VISITED_PAGES] = ics_visited_pages_temp
-                self.save.sync()
+            ics_visited_pages_temp: Dict[str, int] = self.save[ReportShelfKeys.ICS_VISITED_PAGES]
+            ics_visited_pages_temp[normalized_hostname] += 1
+            self.save[ReportShelfKeys.ICS_VISITED_PAGES] = ics_visited_pages_temp
         else:
-            general_visited_pages_temp: Dict[str, Set[str]] = self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]
-            is_unique = stripped_url_str not in general_visited_pages_temp
-            if is_unique:
-                general_visited_pages_temp[normalized_hostname].add(stripped_url_str)
-                self.save[ReportShelfKeys.GENERAL_VISITED_PAGES] = general_visited_pages_temp
-                self.save.sync()
-        return is_unique
+            general_visited_pages_temp: Dict[str, int] = self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]
+            general_visited_pages_temp[normalized_hostname] += 1
+            self.save[ReportShelfKeys.GENERAL_VISITED_PAGES] = general_visited_pages_temp
+        self.save.sync()
 
     def url_is_under_domain_threshold(self, url_components: urllib.parse.ParseResult) -> bool:
         normalized_hostname = self.normalize_url(url_components.hostname)
         if self.ICS_DOMAIN in normalized_hostname:
-            return len(self.save[ReportShelfKeys.ICS_VISITED_PAGES][normalized_hostname]) < self.CRAWL_BUDGET
+            return self.save[ReportShelfKeys.ICS_VISITED_PAGES][normalized_hostname] < self.CRAWL_BUDGET
         else:
-            return len(self.save[ReportShelfKeys.GENERAL_VISITED_PAGES][normalized_hostname]) < self.CRAWL_BUDGET
+            return self.save[ReportShelfKeys.GENERAL_VISITED_PAGES][normalized_hostname] < self.CRAWL_BUDGET
 
     @staticmethod
     def normalize_url(url: str):
@@ -160,7 +153,8 @@ class ReportStatisticsShelf:
 #         return is_unique
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
-USEFUL_WORD_THRESHOLD = 100 # TODO : adjust this threshold
+USEFUL_WORD_THRESHOLD = 100  # TODO : adjust this threshold
+
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -174,7 +168,7 @@ def scraper(url, resp: Response):
 
     # TODO : enforce valid URL check - assuming is valid for now
     # TODO : check for website redirects
-    if url != resp.url: # EXPERIMENT - REMOVE LATER
+    if url != resp.url:  # EXPERIMENT - REMOVE LATER
         with open('redirects.txt', 'a') as f:
             f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
 
@@ -202,7 +196,7 @@ def scraper(url, resp: Response):
     for tag_content in soup.stripped_strings:
         tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
         num_words += len(tokens)
-        textual_info_count += StatsLogger.count_word_freqs(tokens) # TODO : revert back to old function?
+        textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
     # record non-stop word frequencies
     StatsLogger.update_word_freqs()
     # record max word counts
@@ -210,10 +204,7 @@ def scraper(url, resp: Response):
 
     # track unique pages
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
-    if not StatsLogger.record_unique_url(response_url_components):
-        # recorded a duplicate URL
-        print(f"URL : {resp.url} is a duplicate")
-        return
+    StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
 
     ''' ENFORCE CRAWLER CHECKS ---------------- '''
 
