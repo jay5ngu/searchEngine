@@ -176,7 +176,7 @@ def scraper(url, resp: Response):
     # TODO : check for website redirects
     if url != resp.url: # EXPERIMENT - REMOVE LATER
         with open('redirects.txt', 'a') as f:
-            f.append(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}')
+            f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
 
     ''' STATUS CHECKS ---------------- '''
     if resp.status != 200:
@@ -190,7 +190,7 @@ def scraper(url, resp: Response):
     # TODO : check web page size?? # EXPERIMENT - REMOVE LATER
     if len(resp.raw_response.content) > 500000:
         with open('sizes.txt', 'a') as f:
-            f.append(f'Website: {resp.url} , Size: {len(resp.raw_response.content)}')
+            f.write(f'Website: {resp.url} , Size: {len(resp.raw_response.content)}' + '\n')
 
     # TODO : do we log stats for bad pages that we don't crawl too
     ''' LOG REPORT STATS ---------------- '''
