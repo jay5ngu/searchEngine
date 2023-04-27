@@ -57,7 +57,6 @@ class ReportStatisticsShelf:
 
     def count_word_freqs(self, raw_tokens: List[str]) -> int:
         num_good_tokens = 0
-        self.word_freq_temp: Dict[str, int] = {}
         for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
             self.word_freq_temp[good_token] += 1
             num_good_tokens += 1
@@ -65,7 +64,7 @@ class ReportStatisticsShelf:
 
     def update_word_freqs(self):
         saved_word_freq: Dict[str, int] = self.save[ReportShelfKeys.WORD_FREQUENCIES]
-        for key, value in self.word_freq_temp:
+        for key, value in self.word_freq_temp.items():
             saved_word_freq[key] += value
         self.save[ReportShelfKeys.WORD_FREQUENCIES] = saved_word_freq
         self.save.sync()
@@ -84,7 +83,7 @@ class ReportStatisticsShelf:
                 self.save[ReportShelfKeys.ICS_VISITED_PAGES] = ics_visited_pages_temp
                 self.save.sync()
         else:
-            general_visited_pages_temp = Dict[str, Set[str]] = self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]
+            general_visited_pages_temp: Dict[str, Set[str]] = self.save[ReportShelfKeys.GENERAL_VISITED_PAGES]
             is_unique = stripped_url_str not in general_visited_pages_temp
             if is_unique:
                 general_visited_pages_temp[normalized_hostname].add(stripped_url_str)
