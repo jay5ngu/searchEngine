@@ -52,7 +52,7 @@ class ReportStatisticsShelf:
             raise error
 
     def update_max_word_count(self, new_count: int, url: str) -> None:
-        if new_count > self.save[ReportShelfKeys.MAX_WORDS]:
+        if new_count > self.save[ReportShelfKeys.MAX_WORDS][0]:
             self.save[ReportShelfKeys.MAX_WORDS] = (new_count, url)
             self.save.sync()
 
