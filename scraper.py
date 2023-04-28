@@ -19,7 +19,7 @@ class ReportStatisticsShelf:
         # constants
         self.ICS_DOMAIN = ".ics.uci.edu"
         self.STATISTICS_SHELF_FILE = "report_stats.shelve"
-        self.SHOULD_ENFORCE_CRAWL_BUDGET = False
+        self.SHOULD_ENFORCE_CRAWL_BUDGET = True
         self.CRAWL_BUDGET = 4000  # stop crawling a certain domain if we've seen too many pages
 
         # data structure to temporarily track word frequencies
@@ -177,6 +177,7 @@ def scraper(url, resp: Response):
         # TODO : handle this case
         with open('status_errors.txt', 'a') as f:
             f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
+        return []
 
     if not resp or not resp.raw_response or not resp.raw_response.content:
         # don't crawl dead pages - 200 status but no data
@@ -195,7 +196,7 @@ def scraper(url, resp: Response):
     textual_info_count: int = 0
 
     for tag_content in soup.stripped_strings:
-        tokens = re.findall('[A-Za-z0-9]+', tag_content)  # TODO : update regex to include special cases
+        tokens = re.findall("[\w:.'@/-]+", tag_content)
         num_words += len(tokens)
         textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
     # record non-stop word frequencies
@@ -218,7 +219,7 @@ def scraper(url, resp: Response):
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
 
     # filter extracted links for valid ones
-    return [link for link in discovered_links if is_valid(link)]  # TODO : optimize / check for traps?
+    return [link for link in discovered_links if is_valid(link)]
 
 
 def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResult) -> str:
@@ -252,6 +253,9 @@ def is_valid(url):
             return False
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
+            return False
+        if re.match("do=diff", parsed.query.lower()):
+            # check for common trap / redundant page elements
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
