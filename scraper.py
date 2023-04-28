@@ -196,7 +196,7 @@ def scraper(url, resp: Response):
     textual_info_count: int = 0
 
     for tag_content in soup.stripped_strings:
-        tokens = re.findall("[\w:.'@/-]+", tag_content)
+        tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z0-9]+", tag_content)
         num_words += len(tokens)
         textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
     # record non-stop word frequencies
