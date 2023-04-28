@@ -198,7 +198,7 @@ def scraper(url, resp: Response):
     textual_info_count: int = 0
 
     for tag_content in soup.stripped_strings:
-        tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z0-9]+", tag_content)
+        tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z]+", tag_content)
         num_words += len(tokens)
         textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
 
@@ -252,7 +252,7 @@ def is_valid(url):
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
-        if re.match(".*do=(diff|edit).*", parsed.query.lower()):
+        if re.match(".*do=(?!index).*", parsed.query.lower()):
             # check for common trap / redundant page elements
             return False
         return not re.match(
@@ -263,7 +263,15 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) and not re.match(
+            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)", parsed.query.lower())
 
     except TypeError:
         print("TypeError for ", parsed)
@@ -274,4 +282,5 @@ if __name__ == "__main__":
     # print(StatsLogger.STOP_WORDS)
     # print(len(StatsLogger.STOP_WORDS))
 
-    print(is_valid("http://www.vision.ics.uci.edu"))
+    print(is_valid("http://sli.ics.uci.edu/Classes/2012W-178?action=download&upname=L09.pdf"))
+    print(is_valid("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold.pdf"))
