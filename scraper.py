@@ -153,7 +153,7 @@ class ReportStatisticsShelf:
 #         return is_unique
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
-USEFUL_WORD_THRESHOLD = 100  # TODO : adjust this threshold
+USEFUL_WORD_THRESHOLD = 100
 
 
 def scraper(url, resp: Response):
@@ -166,7 +166,11 @@ def scraper(url, resp: Response):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
 
-    # TODO : enforce valid URL check - assuming is valid for now
+    ''' LOG UNIQUE WEB PAGES ---------------- '''
+    # track unique pages
+    response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
+    StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
+
     # TODO : check for website redirects
     if url != resp.url or resp.status >= 300 and resp.status < 400:  # EXPERIMENT - REMOVE LATER
         with open('redirects.txt', 'a') as f:
@@ -174,7 +178,6 @@ def scraper(url, resp: Response):
 
     ''' STATUS CHECKS ---------------- '''
     if resp.status != 200:
-        # TODO : handle this case
         with open('status_errors.txt', 'a') as f:
             f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
         return []
@@ -188,8 +191,7 @@ def scraper(url, resp: Response):
         with open('sizes.txt', 'a') as f:
             f.write(f'Website: {resp.url} , Size: {len(resp.raw_response.content)}' + '\n')
 
-    # TODO : do we log stats for bad pages that we don't crawl too
-    ''' LOG REPORT STATS ---------------- '''
+    ''' ENFORCE CRAWLER CHECKS ---------------- '''
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
 
     num_words: int = 0  # temp var to track web page word count
@@ -199,21 +201,17 @@ def scraper(url, resp: Response):
         tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z0-9]+", tag_content)
         num_words += len(tokens)
         textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
-    # record non-stop word frequencies
-    StatsLogger.update_word_freqs()
-    # record max word counts
-    StatsLogger.update_max_word_count(num_words, resp.url)
-
-    # track unique pages
-    response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
-    StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
-
-    ''' ENFORCE CRAWLER CHECKS ---------------- '''
 
     # only crawl pages with high textual information content
     if textual_info_count < USEFUL_WORD_THRESHOLD:
         # TODO : handle this case
         return []
+
+    ''' LOG CONTENT STATS ---------------- '''
+    # record non-stop word frequencies
+    StatsLogger.update_word_freqs()
+    # record max word counts
+    StatsLogger.update_max_word_count(num_words, resp.url)
 
     # extract links from web content & convert to absolute URLs
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
@@ -254,7 +252,7 @@ def is_valid(url):
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
-        if re.match("do=diff", parsed.query.lower()):
+        if re.match(".*do=(diff|edit).*", parsed.query.lower()):
             # check for common trap / redundant page elements
             return False
         return not re.match(
