@@ -44,7 +44,6 @@ class ReportStatisticsShelf:
         self.save.close()
 
     def _init_stop_words(self) -> None:
-        # TODO : fix the stop words
         try:
             with open('stop_words.txt') as file:
                 self.STOP_WORDS = set(line.rstrip().lower() for line in file)
@@ -103,7 +102,8 @@ class ReportStatisticsShelf:
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 USEFUL_WORD_THRESHOLD = 100
-
+MAX_FILE_SIZE = 500000
+USEFULNESS_RATIO_THRESHOLD = 0.6  # ratio of non-stop to total words in web page
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -120,11 +120,6 @@ def scraper(url, resp: Response):
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
     StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
 
-    # TODO : check for website redirects
-    if url != resp.url or resp.status >= 300 and resp.status < 400:  # TODO : EXPERIMENT - REMOVE LATER
-        with open('redirects.txt', 'a') as f:
-            f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
-
     ''' STATUS CHECKS ---------------- '''
     if resp.status < 200 or resp.status > 300: # 20X range indicates valid results
         return []
@@ -132,10 +127,6 @@ def scraper(url, resp: Response):
     if not resp or not resp.raw_response or not resp.raw_response.content:
         # don't crawl dead pages - 200 status but no data
         return []
-
-    # TODO : check web page size?? # EXPERIMENT - REMOVE LATER
-    if len(resp.raw_response.content) > 500000:
-        pass
 
     ''' ENFORCE CRAWLER CHECKS ---------------- '''
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
@@ -149,7 +140,10 @@ def scraper(url, resp: Response):
         textual_info_count += StatsLogger.count_word_freqs(tokens)
 
     # only crawl pages with high textual information content
-    if textual_info_count < USEFUL_WORD_THRESHOLD:
+    # avoid large files with low information value
+    response_size = len(resp.raw_response.content)
+    if textual_info_count < USEFUL_WORD_THRESHOLD \
+            or response_size > MAX_FILE_SIZE and textual_info_count / num_words > USEFULNESS_RATIO_THRESHOLD:
         StatsLogger.word_freq_temp.clear()
         return []
 
@@ -208,9 +202,9 @@ def is_valid(url):
             # check for common trap / redundant query parameters
             return False
         if re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            r".*\.(apk|css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ppsx"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
@@ -219,9 +213,9 @@ def is_valid(url):
             # ignore non-web page file patterns in URL path
             return False
         return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            r".*\.(apk|css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ppsx"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
