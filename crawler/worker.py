@@ -31,10 +31,11 @@ class Worker(Thread):
             robots_parser = robotparser.RobotFileParser(str(tbd_url).rstrip("/") + "/robots.txt")
             try:
                 robots_parser.read()
-            # TODO : Do we want to crawl urls without a robots
             except urllib.error.URLError:
                 no_robot_file_found = True
             except http.client.InvalidURL:
+                no_robot_file_found = True
+            except UnicodeDecodeError:
                 no_robot_file_found = True
             if no_robot_file_found or robots_parser.can_fetch("*", str(tbd_url)):
                 resp = download(tbd_url, self.config, self.logger)
