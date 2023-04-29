@@ -37,6 +37,10 @@ class Worker(Thread):
                 no_robot_file_found = True
             except UnicodeDecodeError:
                 no_robot_file_found = True
+            except UnicodeEncodeError:
+                no_robot_file_found = True
+            except Exception:
+                no_robot_file_found = True # maybe we shouldn't do this
             if no_robot_file_found or robots_parser.can_fetch("*", str(tbd_url)):
                 resp = download(tbd_url, self.config, self.logger)
                 self.logger.info(
