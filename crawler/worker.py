@@ -1,3 +1,4 @@
+import urllib.error
 from threading import Thread
 from urllib import robotparser
 from inspect import getsource
@@ -19,6 +20,7 @@ class Worker(Thread):
         super().__init__(daemon=True)
         
     def run(self):
+        no_robot_file_found = False
         while True:
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
@@ -26,8 +28,12 @@ class Worker(Thread):
                 break
 
             robots_parser = robotparser.RobotFileParser(str(tbd_url).rstrip("/") + "/robots.txt")
-            robots_parser.read()
-            if robots_parser.can_fetch("*", str(tbd_url)):
+            try:
+                robots_parser.read()
+            # TODO : Do we want to crawl urls without a robots
+            except urllib.error.URLError:
+                no_robot_file_found = True
+            if no_robot_file_found or robots_parser.can_fetch("*", str(tbd_url)):
                 resp = download(tbd_url, self.config, self.logger)
                 self.logger.info(
                     f"Downloaded {tbd_url}, status <{resp.status}>, "
@@ -37,3 +43,4 @@ class Worker(Thread):
                     self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
+            no_robot_file_found = False
