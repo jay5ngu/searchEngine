@@ -153,9 +153,11 @@ class ReportStatisticsShelf:
 #         return is_unique
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
-USEFUL_WORD_THRESHOLD = 100
-MAX_NUM_CHARACTERS_IN_URL_PATH = 200
 
+# crawler trap thresholds
+USEFUL_WORD_THRESHOLD = 100
+MAX_URL_PATH_LENGTH = 250
+MAX_URL_DIRECTORIES = 15
 
 
 def scraper(url, resp: Response):
@@ -254,7 +256,11 @@ def is_valid(url):
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
-        if len(parsed.path) > MAX_NUM_CHARACTERS_IN_URL_PATH or len(parsed.query) > MAX_NUM_CHARACTERS_IN_URL_PATH:
+        if len(parsed.path) > MAX_URL_PATH_LENGTH:
+            # ensure that query and path doesn't have a bunch of junk characters (trap)
+            return False
+        if parsed.path.count("/") > MAX_URL_DIRECTORIES:
+            # ensure that query doesn't have infinite directories (traps)
             return False
         if re.match(".*do=(?!index).*", parsed.query.lower()):
             # check for common trap / redundant page elements
