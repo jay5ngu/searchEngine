@@ -154,6 +154,7 @@ class ReportStatisticsShelf:
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 USEFUL_WORD_THRESHOLD = 100
+MAX_NUM_CHARACTERS_IN_URL_PATH = 200
 
 
 def scraper(url, resp: Response):
@@ -239,7 +240,7 @@ def convert_to_abs_url(relative_url: str, reference_url: urllib.parse.ParseResul
 
 
 def is_valid(url):
-    # Decide whether to crawl this url or not. 
+    # Decide whether to crawl this url or not.
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
@@ -251,6 +252,8 @@ def is_valid(url):
             return False
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
+            return False
+        if len(parsed.path) > MAX_NUM_CHARACTERS_IN_URL_PATH or len(parsed.query) > MAX_NUM_CHARACTERS_IN_URL_PATH:
             return False
         if re.match(".*do=(?!index).*", parsed.query.lower()):
             # check for common trap / redundant page elements
