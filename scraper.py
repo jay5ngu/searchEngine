@@ -205,10 +205,10 @@ def is_valid(url):
         if parsed.path.count("/") > MAX_URL_DIRECTORIES:
             # ensure that query doesn't have large amount of directories (traps)
             return False
-        if re.match(r".*(/blog/|/calendar/|mailto:|http).*", parsed.path.lower()):
+        if re.match(r".*(/calendar/|mailto:|http).*", parsed.path.lower()):
             # we analyzed / researched that many pages with these paths were redundant or prone to wasting crawl budget
             return False
-        if re.match(r".*(do=.*|action=.*|version=.*).*", parsed.query.lower()):
+        if re.match(r".*(do=.*).*", parsed.query.lower()):
             # check for common trap / redundant query parameters
             return False
         if re.match(
