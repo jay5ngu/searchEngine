@@ -101,8 +101,13 @@ class ReportStatisticsShelf:
         return normalized_url
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
+
+# crawler trap thresholds
+# source : https://support.archive-it.org/hc/en-us/articles/208332943-Identify-and-avoid-crawler-traps-
 USEFUL_WORD_THRESHOLD = 100
-MAX_FILE_SIZE = 500000
+MAX_URL_PATH_LENGTH = 250         # very long paths are usual indicators of crawler traps
+MAX_URL_DIRECTORIES = 15          # paths with many directories are usually indicators of crawler traps
+MAX_FILE_SIZE = 500000            # bytes object from response.raw_response.content
 USEFULNESS_RATIO_THRESHOLD = 0.6  # ratio of non-stop to total words in web page
 
 def scraper(url, resp: Response):
@@ -194,9 +199,14 @@ def is_valid(url):
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
+        if len(parsed.path) > MAX_URL_PATH_LENGTH:
+            # ensure that query and path are not extremely long (trap)
+            return False
+        if parsed.path.count("/") > MAX_URL_DIRECTORIES:
+            # ensure that query doesn't have large amount of directories (traps)
+            return False
         if re.match(r".*(/blog/|/calendar/|mailto:|http).*", parsed.path.lower()):
             # we analyzed / researched that many pages with these paths were redundant or prone to wasting crawl budget
-            # source : https://support.archive-it.org/hc/en-us/articles/208332943-Identify-and-avoid-crawler-traps-
             return False
         if re.match(r".*(do=.*|action=.*|version=.*).*", parsed.query.lower()):
             # check for common trap / redundant query parameters
