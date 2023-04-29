@@ -101,57 +101,6 @@ class ReportStatisticsShelf:
             normalized_url = url.lstrip("www.")
         return normalized_url
 
-
-# class ReportStatisticsLogger:
-#     def __init__(self):
-#         # set of non-ICS subdomain unique page URLs (de-fragmented)
-#         self._general_visited_pages: Set[str] = set()
-#         # ICS subdomain unique page URLs (de-fragmented), e.g. {subdomain : {URLs}}
-#         self._ics_visited_pages: Dict[str, Set[str]] = defaultdict(set)
-#         # max encountered num words of page
-#         self._max_words: int = 0
-#         # non-stop word frequency counts, e.g. {word : frequency}
-#         self._word_frequencies: Dict[str, int] = defaultdict(int)
-#
-#         # parse stop words into global set
-#         self._init_stop_words()
-#
-#         # ICS domain
-#         self.ICS_DOMAIN = ".ics.uci.edu"
-#
-#     def _init_stop_words(self) -> None:
-#         # TODO : fix the stop words
-#         try:
-#             with open('stop_words.txt') as file:
-#                 self.STOP_WORDS = set(line.rstrip().lower() for line in file)
-#         except Exception as error:
-#             print("YOU DUMB BRUH! THE ONLY THING STOPPED IS YOUR BRAIN")
-#             raise error
-#
-#     def update_max_word_count(self, new_count: int) -> None:
-#         if new_count > self._max_words:
-#             self._max_words = new_count
-#
-#     def update_word_freqs(self, raw_tokens: List[str]) -> int:
-#         num_good_tokens = 0
-#         for good_token in filter(lambda token: token not in self.STOP_WORDS, map(str.lower, raw_tokens)):
-#             self._word_frequencies[good_token] += 1
-#             num_good_tokens += 1
-#         return num_good_tokens
-#
-#     def record_unique_url(self, url_components: urllib.parse.ParseResult) -> bool:
-#         stripped_url_str: str = url_components._replace(scheme='', fragment='').geturl()
-#         if self.ICS_DOMAIN in url_components.hostname:  # TODO : more efficient way to check?
-#             # URL is in the ics.uci.edu subdomain
-#             is_unique = stripped_url_str not in self._ics_visited_pages[url_components.hostname]
-#             if is_unique:
-#                 self._ics_visited_pages[url_components.hostname].add(stripped_url_str)
-#         else:
-#             is_unique = stripped_url_str not in self._general_visited_pages
-#             if is_unique:
-#                 self._general_visited_pages.add(stripped_url_str)
-#         return is_unique
-
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 USEFUL_WORD_THRESHOLD = 100
 
@@ -167,19 +116,17 @@ def scraper(url, resp: Response):
     #         resp.raw_response.content: the content of the page!
 
     ''' LOG UNIQUE WEB PAGES ---------------- '''
-    # track unique pages
+    # track all unique pages visited (including ones we decide not to crawl)
     response_url_components: urllib.parse.ParseResult = urlparse(resp.url)
     StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
 
     # TODO : check for website redirects
-    if url != resp.url or resp.status >= 300 and resp.status < 400:  # EXPERIMENT - REMOVE LATER
+    if url != resp.url or resp.status >= 300 and resp.status < 400:  # TODO : EXPERIMENT - REMOVE LATER
         with open('redirects.txt', 'a') as f:
             f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
 
     ''' STATUS CHECKS ---------------- '''
-    if resp.status != 200:
-        with open('status_errors.txt', 'a') as f:
-            f.write(f'Request URL: {url}, Response URL: {resp.url}, Status: {resp.status}' + '\n')
+    if resp.status < 200 or resp.status > 300: # 20X range indicates valid results
         return []
 
     if not resp or not resp.raw_response or not resp.raw_response.content:
@@ -188,8 +135,7 @@ def scraper(url, resp: Response):
 
     # TODO : check web page size?? # EXPERIMENT - REMOVE LATER
     if len(resp.raw_response.content) > 500000:
-        with open('sizes.txt', 'a') as f:
-            f.write(f'Website: {resp.url} , Size: {len(resp.raw_response.content)}' + '\n')
+        pass
 
     ''' ENFORCE CRAWLER CHECKS ---------------- '''
     soup: BeautifulSoup = BeautifulSoup(resp.raw_response.content, "lxml")
@@ -198,13 +144,13 @@ def scraper(url, resp: Response):
     textual_info_count: int = 0
 
     for tag_content in soup.stripped_strings:
-        tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z]+", tag_content)
+        tokens = re.findall("[\w]+(?:[:.'@/-]+[\w]+)+|[A-Za-z]{3,}", tag_content)
         num_words += len(tokens)
-        textual_info_count += StatsLogger.count_word_freqs(tokens)  # TODO : revert back to old function?
+        textual_info_count += StatsLogger.count_word_freqs(tokens)
 
     # only crawl pages with high textual information content
     if textual_info_count < USEFUL_WORD_THRESHOLD:
-        # TODO : handle this case
+        StatsLogger.word_freq_temp.clear()
         return []
 
     ''' LOG CONTENT STATS ---------------- '''
@@ -214,7 +160,9 @@ def scraper(url, resp: Response):
     StatsLogger.update_max_word_count(num_words, resp.url)
 
     # extract links from web content & convert to absolute URLs
-    discovered_links = [convert_to_abs_url(link.get('href'), response_url_components) for link in soup.find_all('a')]
+    # ensure links are ASCII strings
+    discovered_links = [convert_to_abs_url(link.get('href'), response_url_components)
+                        for link in soup.find_all('a') if link.get('href').isascii()]
 
     # filter extracted links for valid ones
     return [link for link in discovered_links if is_valid(link)]
@@ -252,8 +200,23 @@ def is_valid(url):
         if StatsLogger.SHOULD_ENFORCE_CRAWL_BUDGET and not StatsLogger.url_is_under_domain_threshold(parsed):
             # enforce crawling budget for each valid web domain
             return False
-        if re.match(".*do=(?!index).*", parsed.query.lower()):
-            # check for common trap / redundant page elements
+        if re.match(r".*(/blog/|/calendar/|mailto:|http).*", parsed.path.lower()):
+            # we analyzed / researched that many pages with these paths were redundant or prone to wasting crawl budget
+            # source : https://support.archive-it.org/hc/en-us/articles/208332943-Identify-and-avoid-crawler-traps-
+            return False
+        if re.match(r".*(do=.*|action=.*|version=.*).*", parsed.query.lower()):
+            # check for common trap / redundant query parameters
+            return False
+        if re.match(
+            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)", parsed.query.lower()):
+            # ignore non-web page file patterns in URL path
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -263,15 +226,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()) and not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)", parsed.query.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
         print("TypeError for ", parsed)
@@ -282,5 +237,10 @@ if __name__ == "__main__":
     # print(StatsLogger.STOP_WORDS)
     # print(len(StatsLogger.STOP_WORDS))
 
+    print(urlparse('https://www.informatics.uci.edu/%20http://ambassador.google.uci.edu'))
+
     print(is_valid("http://sli.ics.uci.edu/Classes/2012W-178?action=download&upname=L09.pdf"))
-    print(is_valid("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold.pdf"))
+    print(is_valid("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download"))
+    print(bool(re.match(r".*(/blog/|mailto:|http.).*", "")))
+
+    print(urlparse("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download").path)
