@@ -157,6 +157,7 @@ USEFUL_WORD_THRESHOLD = 100
 MAX_NUM_CHARACTERS_IN_URL_PATH = 200
 
 
+
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
