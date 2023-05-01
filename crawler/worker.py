@@ -2,6 +2,7 @@ import http.client
 import urllib.error
 from threading import Thread
 from urllib import robotparser
+from urllib.parse import urlparse
 from inspect import getsource
 from utils.download import download
 from utils import get_logger
@@ -22,25 +23,34 @@ class Worker(Thread):
         
     def run(self):
         no_robot_file_found = False
+        restricted_urls = set()
         while True:
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
 
-            robots_parser = robotparser.RobotFileParser(str(tbd_url).rstrip("/") + "/robots.txt")
-            try:
-                robots_parser.read()
-            except urllib.error.URLError:
-                no_robot_file_found = True
-            except http.client.InvalidURL:
-                no_robot_file_found = True
-            except UnicodeDecodeError:
-                no_robot_file_found = True
-            except UnicodeEncodeError:
-                no_robot_file_found = True
-            except Exception:
-                no_robot_file_found = True
+            # robots check
+            url_components = urlparse(tbd_url)
+            # check if site contains robots.txt - only lives in root directory (sites in frontier are already defrag)
+            if not url_components.path and not url_components.query:
+                # is a root dir URL
+                robots_parser = robotparser.RobotFileParser(str(tbd_url).rstrip("/") + "/robots.txt")
+                try:
+                    robots_parser.read()
+                    # TODO : add restricted URLs to our master set
+                except urllib.error.URLError:
+                    no_robot_file_found = True
+                except http.client.InvalidURL:
+                    no_robot_file_found = True
+                except UnicodeDecodeError:
+                    no_robot_file_found = True
+                except UnicodeEncodeError:
+                    no_robot_file_found = True
+                except Exception:
+                    no_robot_file_found = True
+
+            # TODO : modify so that we check the set instead
             if no_robot_file_found or robots_parser.can_fetch("*", str(tbd_url)):
                 resp = download(tbd_url, self.config, self.logger)
                 self.logger.info(
@@ -50,7 +60,8 @@ class Worker(Thread):
                 for scraped_url in scraped_urls:
                     self.frontier.add_url(scraped_url)
             else:
-                pass # TODO : log
+                pass  # TODO : log that we skipped a website
+
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
             no_robot_file_found = False
