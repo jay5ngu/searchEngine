@@ -161,7 +161,7 @@ def scraper(url, resp: Response):
     # extract links from web content & convert to absolute URLs
     # ensure links are ASCII strings
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components)
-                        for link in soup.find_all('a') if link.get('href').isascii()]
+                        for link in soup.find_all('a') if link.get('href') and link.get('href').isascii()]
 
     # filter extracted links for valid ones
     return [link for link in discovered_links if is_valid(link)]
