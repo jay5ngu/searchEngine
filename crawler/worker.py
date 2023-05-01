@@ -40,7 +40,7 @@ class Worker(Thread):
             except UnicodeEncodeError:
                 no_robot_file_found = True
             except Exception:
-                no_robot_file_found = True # maybe we shouldn't do this
+                no_robot_file_found = True
             if no_robot_file_found or robots_parser.can_fetch("*", str(tbd_url)):
                 resp = download(tbd_url, self.config, self.logger)
                 self.logger.info(
@@ -49,6 +49,8 @@ class Worker(Thread):
                 scraped_urls = scraper.scraper(tbd_url, resp)
                 for scraped_url in scraped_urls:
                     self.frontier.add_url(scraped_url)
+            else:
+                pass # TODO : log
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
             no_robot_file_found = False
