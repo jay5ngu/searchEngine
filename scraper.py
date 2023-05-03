@@ -1,5 +1,5 @@
 import urllib.parse
-from typing import Set, Dict, List, Tuple
+from typing import Dict, List, Tuple
 from collections import defaultdict
 from urllib.parse import urlparse
 from utils.response import Response
@@ -98,17 +98,19 @@ class ReportStatisticsShelf:
             normalized_url = url.rstrip("/")
         if url.startswith("www."):
             normalized_url = url.lstrip("www.")
-        return normalized_url
+        return normalized_url.strip()
+
 
 StatsLogger: ReportStatisticsShelf = ReportStatisticsShelf()
 
 # crawler trap thresholds
 # source : https://support.archive-it.org/hc/en-us/articles/208332943-Identify-and-avoid-crawler-traps-
 USEFUL_WORD_THRESHOLD = 100
-MAX_URL_PATH_LENGTH = 250         # very long paths are usual indicators of crawler traps
-MAX_URL_DIRECTORIES = 15          # paths with many directories are usually indicators of crawler traps
-MAX_FILE_SIZE = 500000            # bytes object from response.raw_response.content
+MAX_URL_PATH_LENGTH = 250  # very long paths are usual indicators of crawler traps
+MAX_URL_DIRECTORIES = 15  # paths with many directories are usually indicators of crawler traps
+MAX_FILE_SIZE = 500000  # bytes object from response.raw_response.content
 USEFULNESS_RATIO_THRESHOLD = 0.6  # ratio of non-stop to total words in web page
+
 
 def scraper(url, resp: Response):
     # url: the URL that was used to get the page
@@ -126,7 +128,7 @@ def scraper(url, resp: Response):
     StatsLogger.record_unique_url(response_url_components)  # frontier always returns a unique URL
 
     ''' STATUS CHECKS ---------------- '''
-    if resp.status < 200 or resp.status > 300: # 20X range indicates valid results
+    if resp.status < 200 or resp.status > 300:  # 20X range indicates valid results
         return []
 
     if not resp or not resp.raw_response or not resp.raw_response.content:
@@ -161,7 +163,7 @@ def scraper(url, resp: Response):
     # extract links from web content & convert to absolute URLs
     # ensure links are ASCII strings
     discovered_links = [convert_to_abs_url(link.get('href'), response_url_components)
-                        for link in soup.find_all('a') if link.get('href').isascii()]
+                        for link in soup.find_all('a') if link.get('href') and link.get('href').isascii()]
 
     # filter extracted links for valid ones
     return [link for link in discovered_links if is_valid(link)]
@@ -212,14 +214,14 @@ def is_valid(url):
             # check for common trap / redundant query parameters
             return False
         if re.match(
-            r".*\.(apk|css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ppsx"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)", parsed.query.lower()):
+                r".*\.(apk|css|js|bmp|gif|jpe?g|ico"
+                + r"|png|tiff?|mid|mp2|mp3|mp4"
+                + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf|ppsx"
+                + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+                + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+                + r"|epub|dll|cnf|tgz|sha1"
+                + r"|thmx|mso|arff|rtf|jar|csv"
+                + r"|rm|smil|wmv|swf|wma|zip|rar|gz)", parsed.query.lower()):
             # ignore non-web page file patterns in URL path
             return False
         return not re.match(
@@ -241,10 +243,13 @@ if __name__ == "__main__":
     # print(StatsLogger.STOP_WORDS)
     # print(len(StatsLogger.STOP_WORDS))
 
-    print(urlparse('https://www.informatics.uci.edu/%20http://ambassador.google.uci.edu'))
+    # print(urlparse('https://www.informatics.uci.edu/%20http://ambassador.google.uci.edu'))
+    #
+    # print(is_valid("http://sli.ics.uci.edu/Classes/2012W-178?action=download&upname=L09.pdf"))
+    # print(is_valid("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download"))
+    # print(bool(re.match(r".*(/blog/|mailto:|http.).*", "")))
+    #
+    # print(urlparse("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download").path)
 
-    print(is_valid("http://sli.ics.uci.edu/Classes/2012W-178?action=download&upname=L09.pdf"))
-    print(is_valid("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download"))
-    print(bool(re.match(r".*(/blog/|mailto:|http.).*", "")))
-
-    print(urlparse("http://computableplant.ics.uci.edu/2006/plcb-02-12-12_Wold?action=download").path)
+    test = "https://www.informatics.uci.edu/%20http://ambassador.google.uci.edu"
+    print(urlparse(test)._replace(path='/robots.txt', fragment='').geturl())
