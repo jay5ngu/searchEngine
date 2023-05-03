@@ -19,8 +19,8 @@ class ReportStatisticsShelf:
         # constants
         self.ICS_DOMAIN = ".ics.uci.edu"
         self.STATISTICS_SHELF_FILE = "report_stats.shelve"
-        self.SHOULD_ENFORCE_CRAWL_BUDGET = True
-        self.CRAWL_BUDGET = 4000  # stop crawling a certain domain if we've seen too many pages
+        self.SHOULD_ENFORCE_CRAWL_BUDGET = False
+        self.CRAWL_BUDGET = 8000  # stop crawling a certain domain if we've seen too many pages
 
         # data structure to temporarily track word frequencies
         self.word_freq_temp: Dict[str, int] = defaultdict(int)
