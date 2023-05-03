@@ -59,7 +59,7 @@ class Worker(Thread):
                 # verify site crawl-ability
                 return rp.can_fetch('*', url)
             except Exception as e:
-                self.logger.info(f"Robots.txt parsing error on {robots_url}.")
+                self.logger.info(f"Robots.txt parsing error on {robots_url}. Error message: <{str(e)}>")
                 prohibited_urls[netloc] = None  # invalid robots.txt
                 return True  # by default, enable crawling
 
@@ -73,13 +73,19 @@ class Worker(Thread):
 
             # check site's robots.txt permissions before downloading URL content
             if self.is_not_prohibited(tbd_url, prohibited_urls):
-                resp = download(tbd_url, self.config, self.logger)
-                self.logger.info(
-                    f"Downloaded {tbd_url}, status <{resp.status}>, "
-                    f"using cache {self.config.cache_server}.")
-                scraped_urls = scraper.scraper(tbd_url, resp)
-                for scraped_url in scraped_urls:
-                    self.frontier.add_url(scraped_url)
+                try:
+                    # error handling for scraper / download
+                    resp = download(tbd_url, self.config, self.logger)
+                    self.logger.info(
+                        f"Downloaded {tbd_url}, status <{resp.status}>, "
+                        f"using cache {self.config.cache_server}.")
+                    scraped_urls = scraper.scraper(tbd_url, resp)
+                except Exception as e:
+                    self.logger.info(f"Error with downloading or parsing {tbd_url}.  Error <{str(e)}>")
+                else:
+                    # add URLs to frontier if successful
+                    for scraped_url in scraped_urls:
+                        self.frontier.add_url(scraped_url)
             else:
                 self.logger.info(
                     f"Skipped downloading {tbd_url}, robots.txt disallows.")
