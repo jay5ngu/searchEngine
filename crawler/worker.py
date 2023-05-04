@@ -35,7 +35,7 @@ class Worker(Thread):
             # we need to check for this website's robots.txt rules
 
             # generate robots.txt URL
-            robots_url: str = parsed._replace(path='/robots.txt', fragment='').geturl()
+            robots_url: str = parsed._replace(path='/robots.txt', query='', params='', fragment='').geturl()
 
             # attempt to retrieve robots.txt (from cache server) - don't bypass cache
             try:
@@ -45,18 +45,20 @@ class Worker(Thread):
                     f"Robots file downloaded {robots_url}, status <{resp.status}>, "
                     f"using cache {self.config.cache_server}.")
                 # check response content
-                if not resp or resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
+                if not resp or resp.status != 200 or not resp.raw_response or not resp.raw_response.text:
                     # no robots.txt found or it is empty
+                    self.logger.info(f"Robots file from {robots_url} was empty")
                     prohibited_urls[netloc] = None
                     return True
 
                 # need to create new parser
                 rp: robotparser.RobotFileParser = robotparser.RobotFileParser()
                 # parse the robots.txt content
-                rp.parse(resp.raw_response.content)
+                rp.parse(resp.raw_response.text.splitlines())
                 # save for future use
                 prohibited_urls[netloc] = rp
                 # verify site crawl-ability
+                self.logger.info(f"Successfully parsed robots file from {robots_url}")
                 return rp.can_fetch('*', url)
             except Exception as e:
                 self.logger.info(f"Robots.txt parsing error on {robots_url}. Error message: <{str(e)}>")
