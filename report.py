@@ -5,6 +5,9 @@ with shelve.open(sys.argv[-1]) as save:
     general_visited_pages = save['general_visited_pages'] # {domain : # URLs}
     gen_domains = '\n'.join(general_visited_pages.keys())
     print("Visited Domains:\n", gen_domains)
+
+    for domain, num_URLs in sorted(general_visited_pages.items(), key=lambda domain: domain[0]):
+        print(f'{domain} : {num_URLs} pages')
     
     ics_pages = save['ics_visited_pages'] # {ICS domain : {URLs}}
     print('ICS Domains (ordered):\n')
