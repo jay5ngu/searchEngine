@@ -32,7 +32,7 @@ with shelve.open(sys.argv[-1]) as save:
         counter += 1
     print()
 
-    print('#4 = ICS subdomains and unique page count, ordered alphabetically')
+    print('#4 = ICS subdomains and unique page count, ordered alphabetically by hostname')
     # reconstruct original URL based on Log
     hostnames = dict(ics_pages)
     with open('Worker.log') as f:
