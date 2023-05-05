@@ -30,20 +30,23 @@ with shelve.open(sys.argv[-1]) as save:
     for word, freq in sorted(word_freqs.items(), key=lambda val: (-val[1], val[0]))[:50]:
         print(f'#{counter:>4}: {word:>20}, {freq}')
         counter += 1
+    print()
 
     print('#4 = ICS subdomains and unique page count, ordered alphabetically')
     # reconstruct original URL based on Log
+    hostnames = dict(ics_pages)
     with open('Worker.log') as f:
         for line in f:
             urls = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', line)
             for url in urls:
                 parsed = urlparse(url)
-                if normalize_url(parsed.hostname) in ics_pages:
-                    ics_pages[normalize_url(parsed.hostname)] = url
+                if normalize_url(parsed.hostname) in hostnames:
+                    hostnames[normalize_url(parsed.hostname)] = url
 
     counter = 1
-    for url, num_pages in sorted(ics_pages.items(), key=lambda domain: domain[0]):
-        print(f'{counter:>5f} = {url:>100}, {num_pages}')
+    for norm_url, num_pages in sorted(ics_pages.items(), key=lambda domain: domain[0]):
+        print(f'{counter:>5} = {hostnames[norm_url]:>50}, {num_pages}')
+        counter += 1
         
     
     
