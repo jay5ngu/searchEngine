@@ -40,8 +40,16 @@ with shelve.open(sys.argv[-1]) as save:
             urls = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', line)
             for url in urls:
                 parsed = urlparse(url)
-                if normalize_url(parsed.hostname) in hostnames:
-                    hostnames[normalize_url(parsed.hostname)] = url
+                normalized_hostname = normalize_url(parsed.hostname)
+                if normalized_hostname in hostnames:
+                    # map normalized hostname to it's original URL
+                    hostnames[normalized_hostname] = url
+                    if normalized_hostname in ics_pages:
+                        # update ics_pages so when we sort later, it includes www. prefix but excludes scheme
+                        freq = ics_pages[normalized_hostname]
+                        ics_pages.remove(normalized_hostname)
+                        denormalized_hostname = parsed._replace(scheme='')
+                        ics_pages[denormalized_hostname] = freq
 
     counter = 1
     for norm_url, num_pages in sorted(ics_pages.items(), key=lambda domain: domain[0]):
