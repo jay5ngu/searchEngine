@@ -48,7 +48,7 @@ with shelve.open(sys.argv[-1]) as save:
                         # update ics_pages so when we sort later, it includes www. prefix but excludes scheme
                         freq = ics_pages[normalized_hostname]
                         del ics_pages[normalized_hostname]
-                        denormalized_hostname = parsed._replace(scheme='').geturl()
+                        denormalized_hostname = parsed.hostname
                         ics_pages[denormalized_hostname] = freq
 
     counter = 1
