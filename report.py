@@ -45,7 +45,7 @@ with shelve.open(sys.argv[-1]) as save:
 
     counter = 1
     for norm_url, num_pages in sorted(ics_pages.items(), key=lambda domain: domain[0]):
-        print(f'# {counter:>4} = {hostnames[norm_url]:50}, {num_pages}')
+        print(f'# {counter:>4} = {hostnames[norm_url]:50},  {num_pages}')
         counter += 1
         
     
