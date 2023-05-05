@@ -1,199 +1,193 @@
-Visited Domains:
- stat.uci.edu
-ics.uci.edu
-cs.uci.edu
-informatics.uci.edu
-cs.uci.edu : 685 pages
-ics.uci.edu : 4899 pages
-informatics.uci.edu : 5347 pages
-stat.uci.edu : 264 pages
-ICS Domains (ordered):
-
-accessibility.ics.uci.edu : 1 pages
-acoi.ics.uci.edu : 74 pages
-aiclub.ics.uci.edu : 2 pages
-alumni.ics.uci.edu : 5 pages
-archive-beta.ics.uci.edu : 2 pages
-archive.ics.uci.edu : 41 pages
-asterix.ics.uci.edu : 13 pages
-asterixdb.ics.uci.edu : 3 pages
-awareness.ics.uci.edu : 1 pages
-calendar.ics.uci.edu : 1 pages
-cbcl.ics.uci.edu : 245 pages
-cert.ics.uci.edu : 49 pages
-cgvw.ics.uci.edu : 1 pages
-checkmate.ics.uci.edu : 1 pages
-chenli.ics.uci.edu : 9 pages
-cherry.ics.uci.edu : 1 pages
-chime.ics.uci.edu : 1 pages
-cloudberry.ics.uci.edu : 3 pages
-cml.ics.uci.edu : 184 pages
-cocoa-krispies.ics.uci.edu : 1 pages
-code.ics.uci.edu : 13 pages
-codeexchange.ics.uci.edu : 1 pages
-computableplant.ics.uci.edu : 68 pages
-containers.ics.uci.edu : 1 pages
-coronavirustwittermap.ics.uci.edu : 1 pages
-cradl.ics.uci.edu : 29 pages
-create.ics.uci.edu : 7 pages
-cwicsocal18.ics.uci.edu : 1 pages
-cyberclub.ics.uci.edu : 5 pages
-dataguard.ics.uci.edu : 1 pages
-dataprotector.ics.uci.edu : 1 pages
-dblp.ics.uci.edu : 2 pages
-dejavu.ics.uci.edu : 2 pages
-dgillen.ics.uci.edu : 25 pages
-duttgroup.ics.uci.edu : 105 pages
-dynamo.ics.uci.edu : 10 pages
-elms.ics.uci.edu : 1 pages
-emj-pc.ics.uci.edu : 1 pages
-emj.ics.uci.edu : 45 pages
-esl.ics.uci.edu : 8 pages
-evoke.ics.uci.edu : 6 pages
-flamingo.ics.uci.edu : 28 pages
-fr.ics.uci.edu : 11 pages
-frost.ics.uci.edu : 1 pages
-futurehealth.ics.uci.edu : 123 pages
-grafana-infra-blue.ics.uci.edu : 1 pages
-grafana.ics.uci.edu : 1 pages
-grape.ics.uci.edu : 1622 pages
-graphics.ics.uci.edu : 17 pages
-graphmod.ics.uci.edu : 15 pages
-hack.ics.uci.edu : 2 pages
-hai.ics.uci.edu : 7 pages
-hana.ics.uci.edu : 4 pages
-helpdesk.ics.uci.edu : 3 pages
-hobbes.ics.uci.edu : 11 pages
-hombao.ics.uci.edu : 2 pages
-honors.ics.uci.edu : 1 pages
-hpi.ics.uci.edu : 4 pages
-hub.ics.uci.edu : 2 pages
-i-sensorium.ics.uci.edu : 7 pages
-iasl.ics.uci.edu : 22 pages
-ieee.ics.uci.edu : 1 pages
-industryshowcase.ics.uci.edu : 22 pages
-informatics.ics.uci.edu : 3 pages
-informatics.mt-live.ics.uci.edu : 1 pages
-ipf.ics.uci.edu : 2 pages
-ipubmed.ics.uci.edu : 1 pages
-isg.ics.uci.edu : 191 pages
-jgarcia.ics.uci.edu : 12 pages
-jujube.ics.uci.edu : 2 pages
-keys.ics.uci.edu : 1 pages
-luci.ics.uci.edu : 6 pages
-mailman.ics.uci.edu : 2 pages
-malek.ics.uci.edu : 1 pages
-map125.ics.uci.edu : 1 pages
-mapgrid.ics.uci.edu : 1 pages
-mcs.ics.uci.edu : 84 pages
-mdogucu.ics.uci.edu : 7 pages
-mds.ics.uci.edu : 21 pages
-metaviz.ics.uci.edu : 1 pages
-mhcid.ics.uci.edu : 17 pages
-mondego.ics.uci.edu : 15 pages
-motifmap-rna.ics.uci.edu : 2 pages
-motifmap.ics.uci.edu : 2 pages
-mse.ics.uci.edu : 3 pages
-mswe.ics.uci.edu : 14 pages
-mt-live.ics.uci.edu : 1 pages
-nalini.ics.uci.edu : 7 pages
-ngs.ics.uci.edu : 1769 pages
-omni.ics.uci.edu : 1 pages
-password.ics.uci.edu : 1 pages
-perennialpolycultures.ics.uci.edu : 1 pages
-pgadmin.ics.uci.edu : 1 pages
-plrg.ics.uci.edu : 84 pages
-prometheus-infra-blue.ics.uci.edu : 1 pages
-psearch.ics.uci.edu : 2 pages
-radicle.ics.uci.edu : 1 pages
-redmiles.ics.uci.edu : 4 pages
-riscit.ics.uci.edu : 3 pages
-rstudio-hub.ics.uci.edu : 1 pages
-sconce.ics.uci.edu : 1 pages
-sdcl.ics.uci.edu : 206 pages
-se.ics.uci.edu : 1 pages
-seal.ics.uci.edu : 53 pages
-seraja.ics.uci.edu : 2 pages
-sherlock.ics.uci.edu : 8 pages
-sli.ics.uci.edu : 368 pages
-sourcerer.ics.uci.edu : 2 pages
-speedtest.ics.uci.edu : 1 pages
-sprout.ics.uci.edu : 2 pages
-stairs.ics.uci.edu : 4 pages
-statconsulting.ics.uci.edu : 5 pages
-student-council.ics.uci.edu : 2 pages
-studentcouncil.ics.uci.edu : 46 pages
-summeracademy.ics.uci.edu : 6 pages
-support.ics.uci.edu : 3 pages
-swiki.ics.uci.edu : 53 pages
-tad.ics.uci.edu : 3 pages
-tastier.ics.uci.edu : 1 pages
-tippers.ics.uci.edu : 1 pages
-tippersweb.ics.uci.edu : 4 pages
-transformativeplay.ics.uci.edu : 53 pages
-tutors.ics.uci.edu : 1 pages
-ugradforms.ics.uci.edu : 1 pages
-unite.ics.uci.edu : 10 pages
-vision.ics.uci.edu : 215 pages
-wearablegames.ics.uci.edu : 11 pages
-wics.ics.uci.edu : 1618 pages
-wiki.ics.uci.edu : 50 pages
-www-db.ics.uci.edu : 20 pages
-xtune.ics.uci.edu : 6 pages
-yarra.ics.uci.edu : 1 pages
+#1 = Unique Pages Found
 Unique Pages: 19098 
 
+#2 = Longest Page (token word counts, including valid stopwords)
 Longest Encountered Page Length: (97190, 'https://grape.ics.uci.edu/wiki/public/raw-attachment/wiki/cs221-2019-spring-project2/Team2StressTest.txt') 
 
+#3 = 50 most common non stop words
 Word Frequencies: 
 
-student = 76479
-informatics = 74353
-software = 60126
-computer = 59246
-b.s = 55010
-graduate = 54804
-engineering = 54655
-september = 54392
-june = 53016
-july = 51996
-undergraduate = 50726
-march = 50490
-students = 49761
-october = 49715
-april = 49710
-uci = 49303
-november = 48867
-february = 48497
-january = 48483
-december = 47635
-news = 46458
-ph.d = 45614
-august = 45106
-policies = 45002
-department = 42456
-science = 41563
-school = 37719
-design = 37208
-ics = 35640
-support = 35095
-read = 34906
-course = 33571
-irvine = 32710
-university = 32411
-professor = 32368
-profiles = 32344
-bren = 32194
-projects = 31810
-people = 31522
-contact = 29720
-courses = 29539
-alumni = 28965
-faculty = 28926
-media = 27659
-will = 27647
-books = 26224
-events = 26182
-upcoming = 25954
-game = 25912
-master = 25274
+#   1:              student, 76479
+#   2:          informatics, 74353
+#   3:             software, 60126
+#   4:             computer, 59246
+#   5:                  b.s, 55010
+#   6:             graduate, 54804
+#   7:          engineering, 54655
+#   8:            september, 54392
+#   9:                 june, 53016
+#  10:                 july, 51996
+#  11:        undergraduate, 50726
+#  12:                march, 50490
+#  13:             students, 49761
+#  14:              october, 49715
+#  15:                april, 49710
+#  16:                  uci, 49303
+#  17:             november, 48867
+#  18:             february, 48497
+#  19:              january, 48483
+#  20:             december, 47635
+#  21:                 news, 46458
+#  22:                 ph.d, 45614
+#  23:               august, 45106
+#  24:             policies, 45002
+#  25:           department, 42456
+#  26:              science, 41563
+#  27:               school, 37719
+#  28:               design, 37208
+#  29:                  ics, 35640
+#  30:              support, 35095
+#  31:                 read, 34906
+#  32:               course, 33571
+#  33:               irvine, 32710
+#  34:           university, 32411
+#  35:            professor, 32368
+#  36:             profiles, 32344
+#  37:                 bren, 32194
+#  38:             projects, 31810
+#  39:               people, 31522
+#  40:              contact, 29720
+#  41:              courses, 29539
+#  42:               alumni, 28965
+#  43:              faculty, 28926
+#  44:                media, 27659
+#  45:                 will, 27647
+#  46:                books, 26224
+#  47:               events, 26182
+#  48:             upcoming, 25954
+#  49:                 game, 25912
+#  50:               master, 25274
+
+#4 = ICS subdomains and unique page count, ordered alphabetically by hostname
+#    1 = https://accessibility.ics.uci.edu             | 1
+#    2 = https://acoi.ics.uci.edu                      | 74
+#    3 = https://aiclub.ics.uci.edu                    | 2
+#    4 = http://alumni.ics.uci.edu                     | 5
+#    5 = https://archive-beta.ics.uci.edu              | 2
+#    6 = http://archive.ics.uci.edu                    | 41
+#    7 = https://asterix.ics.uci.edu                   | 13
+#    8 = http://asterixdb.ics.uci.edu                  | 3
+#    9 = http://awareness.ics.uci.edu                  | 1
+#   10 = http://calendar.ics.uci.edu                   | 1
+#   11 = https://cbcl.ics.uci.edu                      | 245
+#   12 = http://cgvw.ics.uci.edu                       | 1
+#   13 = http://checkmate.ics.uci.edu                  | 1
+#   14 = https://chenli.ics.uci.edu                    | 9
+#   15 = http://cherry.ics.uci.edu                     | 1
+#   16 = http://chime.ics.uci.edu                      | 1
+#   17 = https://cloudberry.ics.uci.edu                | 3
+#   18 = https://cml.ics.uci.edu                       | 184
+#   19 = http://cocoa-krispies.ics.uci.edu             | 1
+#   20 = https://code.ics.uci.edu                      | 13
+#   21 = http://codeexchange.ics.uci.edu               | 1
+#   22 = http://computableplant.ics.uci.edu            | 68
+#   23 = https://containers.ics.uci.edu                | 1
+#   24 = http://coronavirustwittermap.ics.uci.edu      | 1
+#   25 = http://cradl.ics.uci.edu                      | 29
+#   26 = https://create.ics.uci.edu                    | 7
+#   27 = https://cwicsocal18.ics.uci.edu               | 1
+#   28 = https://cyberclub.ics.uci.edu                 | 5
+#   29 = http://DataGuard.ics.uci.edu                  | 1
+#   30 = http://DataProtector.ics.uci.edu              | 1
+#   31 = http://dblp.ics.uci.edu                       | 2
+#   32 = http://dejavu.ics.uci.edu                     | 2
+#   33 = https://dgillen.ics.uci.edu                   | 25
+#   34 = https://duttgroup.ics.uci.edu                 | 105
+#   35 = http://dynamo.ics.uci.edu                     | 10
+#   36 = http://elms.ics.uci.edu                       | 1
+#   37 = http://emj-pc.ics.uci.edu                     | 1
+#   38 = https://emj.ics.uci.edu                       | 45
+#   39 = http://esl.ics.uci.edu                        | 8
+#   40 = http://evoke.ics.uci.edu                      | 6
+#   41 = https://flamingo.ics.uci.edu                  | 28
+#   42 = http://fr.ics.uci.edu                         | 11
+#   43 = http://frost.ics.uci.edu                      | 1
+#   44 = http://futurehealth.ics.uci.edu               | 123
+#   45 = https://grafana-infra-blue.ics.uci.edu        | 1
+#   46 = https://grafana.ics.uci.edu                   | 1
+#   47 = https://grape.ics.uci.edu                     | 1622
+#   48 = http://graphmod.ics.uci.edu                   | 15
+#   49 = https://hack.ics.uci.edu                      | 2
+#   50 = http://hai.ics.uci.edu                        | 7
+#   51 = http://hana.ics.uci.edu                       | 4
+#   52 = https://helpdesk.ics.uci.edu                  | 3
+#   53 = http://hobbes.ics.uci.edu                     | 11
+#   54 = http://hombao.ics.uci.edu                     | 2
+#   55 = http://honors.ics.uci.edu                     | 1
+#   56 = https://hpi.ics.uci.edu                       | 4
+#   57 = https://hub.ics.uci.edu                       | 2
+#   58 = http://i-sensorium.ics.uci.edu                | 7
+#   59 = https://iasl.ics.uci.edu                      | 22
+#   60 = http://ieee.ics.uci.edu                       | 1
+#   61 = https://industryshowcase.ics.uci.edu          | 22
+#   62 = https://informatics.mt-live.ics.uci.edu       | 1
+#   63 = https://ipf.ics.uci.edu                       | 2
+#   64 = https://ipubmed.ics.uci.edu                   | 1
+#   65 = https://jgarcia.ics.uci.edu                   | 12
+#   66 = http://jujube.ics.uci.edu                     | 2
+#   67 = http://keys.ics.uci.edu                       | 1
+#   68 = http://luci.ics.uci.edu                       | 6
+#   69 = https://mailman.ics.uci.edu                   | 2
+#   70 = https://malek.ics.uci.edu                     | 1
+#   71 = http://map125.ics.uci.edu                     | 1
+#   72 = http://mapgrid.ics.uci.edu                    | 1
+#   73 = https://mcs.ics.uci.edu                       | 84
+#   74 = https://mdogucu.ics.uci.edu                   | 7
+#   75 = https://mds.ics.uci.edu                       | 21
+#   76 = http://metaviz.ics.uci.edu                    | 1
+#   77 = https://mhcid.ics.uci.edu                     | 17
+#   78 = http://mondego.ics.uci.edu                    | 15
+#   79 = http://motifmap-rna.ics.uci.edu               | 2
+#   80 = http://motifmap.ics.uci.edu                   | 2
+#   81 = https://mse.ics.uci.edu                       | 3
+#   82 = https://mswe.ics.uci.edu                      | 14
+#   83 = https://mt-live.ics.uci.edu                   | 1
+#   84 = https://nalini.ics.uci.edu                    | 7
+#   85 = https://ngs.ics.uci.edu                       | 1769
+#   86 = http://omni.ics.uci.edu                       | 1
+#   87 = https://password.ics.uci.edu                  | 1
+#   88 = http://perennialpolycultures.ics.uci.edu      | 1
+#   89 = https://pgadmin.ics.uci.edu                   | 1
+#   90 = http://plrg.ics.uci.edu                       | 84
+#   91 = https://prometheus-infra-blue.ics.uci.edu     | 1
+#   92 = http://psearch.ics.uci.edu                    | 2
+#   93 = http://radicle.ics.uci.edu                    | 1
+#   94 = https://redmiles.ics.uci.edu                  | 4
+#   95 = http://riscit.ics.uci.edu                     | 3
+#   96 = https://rstudio-hub.ics.uci.edu               | 1
+#   97 = http://sconce.ics.uci.edu                     | 1
+#   98 = http://sdcl.ics.uci.edu                       | 206
+#   99 = http://se.ics.uci.edu                         | 1
+#  100 = http://seal.ics.uci.edu                       | 53
+#  101 = http://seraja.ics.uci.edu                     | 2
+#  102 = http://sherlock.ics.uci.edu                   | 8
+#  103 = http://sli.ics.uci.edu                        | 368
+#  104 = http://sourcerer.ics.uci.edu                  | 2
+#  105 = https://speedtest.ics.uci.edu                 | 1
+#  106 = http://sprout.ics.uci.edu                     | 2
+#  107 = http://stairs.ics.uci.edu                     | 4
+#  108 = https://statconsulting.ics.uci.edu            | 5
+#  109 = https://student-council.ics.uci.edu           | 2
+#  110 = https://studentcouncil.ics.uci.edu            | 46
+#  111 = https://summeracademy.ics.uci.edu             | 6
+#  112 = https://support.ics.uci.edu                   | 3
+#  113 = https://swiki.ics.uci.edu                     | 53
+#  114 = https://tad.ics.uci.edu                       | 3
+#  115 = http://tastier.ics.uci.edu                    | 1
+#  116 = https://tippers.ics.uci.edu                   | 1
+#  117 = https://tippersweb.ics.uci.edu                | 4
+#  118 = https://transformativeplay.ics.uci.edu        | 53
+#  119 = http://tutors.ics.uci.edu                     | 1
+#  120 = https://ugradforms.ics.uci.edu                | 1
+#  121 = https://unite.ics.uci.edu                     | 10
+#  122 = http://vision.ics.uci.edu                     | 215
+#  123 = https://wearablegames.ics.uci.edu             | 11
+#  124 = https://wics.ics.uci.edu                      | 1618
+#  125 = https://wiki.ics.uci.edu                      | 50
+#  126 = http://www-db.ics.uci.edu                     | 20
+#  127 = http://www.cert.ics.uci.edu                   | 49
+#  128 = http://www.graphics.ics.uci.edu               | 17
+#  129 = http://www.informatics.ics.uci.edu            | 3
+#  130 = http://www.isg.ics.uci.edu                    | 191
+#  131 = http://xtune.ics.uci.edu                      | 6
+#  132 = http://yarra.ics.uci.edu                      | 1
