@@ -34,22 +34,24 @@ with shelve.open(sys.argv[-1]) as save:
 
     print('#4 = ICS subdomains and unique page count, ordered alphabetically by hostname')
     # reconstruct original URL based on Log
-    hostnames = dict(ics_pages)
+    hostnames = {}
     with open('Worker.log') as f:
         for line in f:
             urls = re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', line)
             for url in urls:
                 parsed = urlparse(url)
                 normalized_hostname = normalize_url(parsed.hostname)
-                if normalized_hostname in hostnames:
+                denormalized_hostname = parsed.hostname
+
+                # update ics_pages so when we sort later, it includes www. prefix but excludes scheme
+                if normalized_hostname in ics_pages:
+                    freq = ics_pages[normalized_hostname]
+                    del ics_pages[normalized_hostname]
+                    ics_pages[denormalized_hostname] = freq
+
+                if denormalized_hostname not in hostnames:
                     # map normalized hostname to it's original URL
-                    hostnames[normalized_hostname] = url
-                    if normalized_hostname in ics_pages:
-                        # update ics_pages so when we sort later, it includes www. prefix but excludes scheme
-                        freq = ics_pages[normalized_hostname]
-                        del ics_pages[normalized_hostname]
-                        denormalized_hostname = parsed.hostname
-                        ics_pages[denormalized_hostname] = freq
+                    hostnames[denormalized_hostname] = url
 
     counter = 1
     for norm_url, num_pages in sorted(ics_pages.items(), key=lambda domain: domain[0]):
