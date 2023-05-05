@@ -47,7 +47,7 @@ with shelve.open(sys.argv[-1]) as save:
                     if normalized_hostname in ics_pages:
                         # update ics_pages so when we sort later, it includes www. prefix but excludes scheme
                         freq = ics_pages[normalized_hostname]
-                        ics_pages.remove(normalized_hostname)
+                        del ics_pages[normalized_hostname]
                         denormalized_hostname = parsed._replace(scheme='')
                         ics_pages[denormalized_hostname] = freq
 
